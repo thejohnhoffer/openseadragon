@@ -147,6 +147,7 @@ $.TiledImage = function( options ) {
         _midDraw:       false, // Is the tiledImage currently updating the viewport?
         _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
+        _tilesLoading:  0,     // The number of pending tile requests.
         //configurable settings
         springStiffness:        $.DEFAULT_SETTINGS.springStiffness,
         animationTime:          $.DEFAULT_SETTINGS.animationTime,
@@ -918,6 +919,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     // private
     _updateViewport: function() {
         this._needsDraw = false;
+        this._tilesLoading = 0;
 
         // Reset tile's internal drawn state
         while (this.lastDrawn.length > 0) {
@@ -1014,7 +1016,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._needsDraw = true;
             this._setFullyLoaded(false);
         } else {
-            this._setFullyLoaded(true);
+            this._setFullyLoaded(this._tilesLoading === 0);
         }
     }
 });
@@ -1198,7 +1200,7 @@ function updateTile( tiledImage, drawLevel, haveDrawn, x, y, level, levelOpacity
         }
     } else if ( tile.loading ) {
         // the tile is already in the download queue
-        // thanks josh1093 for finally translating this typo
+        tiledImage._tilesLoading++;
     } else {
         best = compareTiles( best, tile );
     }
