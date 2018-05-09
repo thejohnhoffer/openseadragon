@@ -51,6 +51,7 @@ function ImageJob (options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
+        makeAjaxRequest: $.makeAjaxRequest,
         jobId: null
     }, options);
 
@@ -91,7 +92,7 @@ ImageJob.prototype = {
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source proprety of the image object.
         if (this.loadWithAjax) {
-            this.request = $.makeAjaxRequest({
+            this.request = self.makeAjaxRequest({
                 url: this.src,
                 withCredentials: this.ajaxWithCredentials,
                 headers: this.ajaxHeaders,
@@ -102,6 +103,8 @@ ImageJob.prototype = {
                     // BlobBuilder fallback adapted from
                     // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
                     try {
+                        // Store the original response
+                        self.image._array = request.response;
                         blb = new window.Blob([request.response]);
                     } catch (e) {
                         var BlobBuilder = (
@@ -121,6 +124,7 @@ ImageJob.prototype = {
                         self.errorMsg = "Empty image response.";
                         self.finish(false);
                     }
+
                     // Create a URL for the blob data and make it the source of the image object.
                     // This will still trigger Image.onload to indicate a successful tile load.
                     var url = (window.URL || window.webkitURL).createObjectURL(blb);
@@ -212,6 +216,7 @@ $.ImageLoader.prototype = {
                 ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
+                makeAjaxRequest: options.makeAjaxRequest,
                 callback: complete,
                 abort: options.abort,
                 timeout: this.timeout
