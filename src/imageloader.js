@@ -51,6 +51,9 @@ function ImageJob (options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
+        filterAjaxResponse: function(blb) {
+          return blb;
+        },
         jobId: null
     }, options);
 
@@ -121,6 +124,9 @@ ImageJob.prototype = {
                         self.errorMsg = "Empty image response.";
                         self.finish(false);
                     }
+                    // Apply user-defined function to response blob
+                    blb = this.filterAjaxResponse(blb);
+
                     // Create a URL for the blob data and make it the source of the image object.
                     // This will still trigger Image.onload to indicate a successful tile load.
                     var url = (window.URL || window.webkitURL).createObjectURL(blb);
@@ -212,6 +218,7 @@ $.ImageLoader.prototype = {
                 ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
+                filterAjaxResponse: options.filterAjaxResponse,
                 callback: complete,
                 abort: options.abort,
                 timeout: this.timeout

@@ -1428,6 +1428,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     iOSDevice: _this.iOSDevice,
                     crossOriginPolicy: queueItem.options.crossOriginPolicy,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
+                    filterAjaxResponse: queueItem.options.filterAjaxResponse,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode
