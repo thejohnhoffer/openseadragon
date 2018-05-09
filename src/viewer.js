@@ -1308,6 +1308,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.ajaxWithCredentials === undefined) {
             options.ajaxWithCredentials = this.ajaxWithCredentials;
         }
+        if (options.filterAjaxResponse === undefined) {
+            options.filterAjaxResponse = options.tileSource.filterAjaxResponse;
+        }
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
