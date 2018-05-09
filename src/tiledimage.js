@@ -1451,8 +1451,16 @@ function getTile(
  */
 function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
+    var customAjax;
+
+    // Bind tiledImage if filtering Ajax
+    if ($.isFunction(tiledImage.makeAjaxRequest)) {
+      customAjax = tiledImage.makeAjaxRequest;
+    }
+
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        makeAjaxRequest: customAjax,
         loadWithAjax: tile.loadWithAjax,
         ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
