@@ -125,7 +125,7 @@ ImageJob.prototype = {
                         self.finish(false);
                     }
                     // Apply user-defined function to response blob
-                    blb = this.filterAjaxResponse(blb);
+                    blb = self.filterAjaxResponse(blb);
 
                     // Create a URL for the blob data and make it the source of the image object.
                     // This will still trigger Image.onload to indicate a successful tile load.
