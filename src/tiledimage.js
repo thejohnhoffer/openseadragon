@@ -1457,7 +1457,7 @@ function loadTile( tiledImage, tile, time ) {
         ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
-        filterAjaxResponse: tiledImage.filterAjaxResponse,
+        filterAjaxResponse: tiledImage.filterAjaxResponse.bind(tiledImage),
         callback: function( image, errorMsg, tileRequest ){
             onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
         },
