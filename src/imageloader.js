@@ -51,8 +51,8 @@ function ImageJob (options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
-        filterAjaxResponse: function(blb) {
-          return blb;
+        filterAjaxResponse: function(response) {
+          return new window.Blob([response]);
         },
         jobId: null
     }, options);
@@ -105,7 +105,8 @@ ImageJob.prototype = {
                     // BlobBuilder fallback adapted from
                     // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
                     try {
-                        blb = new window.Blob([request.response]);
+                        // Apply user-defined function to response
+                        blb = self.filterAjaxResponse(request.response);
                     } catch (e) {
                         var BlobBuilder = (
                             window.BlobBuilder ||
@@ -124,8 +125,6 @@ ImageJob.prototype = {
                         self.errorMsg = "Empty image response.";
                         self.finish(false);
                     }
-                    // Apply user-defined function to response blob
-                    blb = self.filterAjaxResponse(blb);
 
                     // Create a URL for the blob data and make it the source of the image object.
                     // This will still trigger Image.onload to indicate a successful tile load.
