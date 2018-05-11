@@ -1449,26 +1449,29 @@ function getTile(
  * @param {OpenSeadragon.Tile} tile
  * @param {Number} time
  */
-async function loadTile( tiledImage, tile, time ) {
+function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
-    // Resolve promises in tile url
-    if ($.type(tile.url) != 'string') {
-      tile.url = await tile.url;
-    }
 
-    tiledImage._imageLoader.addJob({
-        src: tile.url,
-        loadWithAjax: tile.loadWithAjax,
-        ajaxHeaders: tile.ajaxHeaders,
-        crossOriginPolicy: tiledImage.crossOriginPolicy,
-        ajaxWithCredentials: tiledImage.ajaxWithCredentials,
-        callback: function( image, errorMsg, tileRequest ){
-            onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
-        },
-        abort: function() {
-            tile.loading = false;
-        }
-    });
+    // Resolve tile url as a promise
+    var awaitUrl = window.Promise.resolve(tile.url);
+    awaitUrl.then(function(srcUrl){
+
+      tile.url = srcUrl;
+      tiledImage._imageLoader.addJob({
+          src: tile.url,
+          loadWithAjax: tile.loadWithAjax,
+          ajaxHeaders: tile.ajaxHeaders,
+          crossOriginPolicy: tiledImage.crossOriginPolicy,
+          ajaxWithCredentials: tiledImage.ajaxWithCredentials,
+          callback: function( image, errorMsg, tileRequest ){
+              onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
+          },
+          abort: function() {
+              tile.loading = false;
+          }
+      });
+
+   });
 }
 
 /**
