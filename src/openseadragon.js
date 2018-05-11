@@ -734,6 +734,7 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
+            '[object AsyncFunction]': 'function',
             '[object Boolean]':     'boolean',
             '[object Number]':      'number',
             '[object String]':      'string',
