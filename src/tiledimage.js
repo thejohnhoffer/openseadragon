@@ -1449,8 +1449,13 @@ function getTile(
  * @param {OpenSeadragon.Tile} tile
  * @param {Number} time
  */
-function loadTile( tiledImage, tile, time ) {
+async function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
+    // Resolve promises in tile url
+    if ($.type(tile.url) != 'string') {
+      tile.url = await tile.url;
+    }
+
     tiledImage._imageLoader.addJob({
         src: tile.url,
         loadWithAjax: tile.loadWithAjax,
