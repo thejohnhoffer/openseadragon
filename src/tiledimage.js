@@ -1451,13 +1451,20 @@ function getTile(
  */
 function loadTile( tiledImage, tile, time ) {
     tile.loading = true;
+    var customFilter;
+
+    // Bind tiledImage if filtering Ajax
+    if ($.type(tiledImage.filterAjaxResponse) == 'function') {
+      customFilter = tiledImage.filterAjaxResponse.bind(tiledImage);
+    }
+
     tiledImage._imageLoader.addJob({
         src: tile.url,
+        filterAjaxResponse: customFilter,
         loadWithAjax: tile.loadWithAjax,
         ajaxHeaders: tile.ajaxHeaders,
         crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
-        filterAjaxResponse: tiledImage.filterAjaxResponse.bind(tiledImage),
         callback: function( image, errorMsg, tileRequest ){
             onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
         },
