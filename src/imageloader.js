@@ -51,9 +51,7 @@ function ImageJob (options) {
 
     $.extend(true, this, {
         timeout: $.DEFAULT_SETTINGS.timeout,
-        filterAjaxResponse: function(response) {
-          return new window.Blob([response]);
-        },
+        makeAjaxRequest: $.makeAjaxRequest,
         jobId: null
     }, options);
 
@@ -94,7 +92,7 @@ ImageJob.prototype = {
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source proprety of the image object.
         if (this.loadWithAjax) {
-            this.request = $.makeAjaxRequest({
+            this.request = self.makeAjaxRequest({
                 url: this.src,
                 withCredentials: this.ajaxWithCredentials,
                 headers: this.ajaxHeaders,
@@ -105,8 +103,7 @@ ImageJob.prototype = {
                     // BlobBuilder fallback adapted from
                     // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
                     try {
-                        // Apply user-defined function to response
-                        blb = self.filterAjaxResponse(request.response);
+                        blb = new window.Blob([request.response]);
                     } catch (e) {
                         var BlobBuilder = (
                             window.BlobBuilder ||
@@ -217,7 +214,7 @@ $.ImageLoader.prototype = {
                 ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
-                filterAjaxResponse: options.filterAjaxResponse,
+                makeAjaxRequest: options.makeAjaxRequest,
                 callback: complete,
                 abort: options.abort,
                 timeout: this.timeout

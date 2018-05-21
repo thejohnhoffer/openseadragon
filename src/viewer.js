@@ -1308,8 +1308,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.ajaxWithCredentials === undefined) {
             options.ajaxWithCredentials = this.ajaxWithCredentials;
         }
-        if (options.filterAjaxResponse === undefined) {
-            options.filterAjaxResponse = options.tileSource.filterAjaxResponse;
+        if (options.makeAjaxRequest === undefined) {
+            options.makeAjaxRequest = options.tileSource.makeAjaxRequest;
         }
         if (options.loadTilesWithAjax === undefined) {
             options.loadTilesWithAjax = this.loadTilesWithAjax;
@@ -1431,7 +1431,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     iOSDevice: _this.iOSDevice,
                     crossOriginPolicy: queueItem.options.crossOriginPolicy,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
-                    filterAjaxResponse: queueItem.options.filterAjaxResponse,
+                    makeAjaxRequest: queueItem.options.makeAjaxRequest,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders,
                     debugMode: _this.debugMode
