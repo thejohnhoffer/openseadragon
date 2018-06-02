@@ -64,16 +64,9 @@ $.Tile.prototype = {
     },
     drawHTML: function( container ) {
         if (!this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
-                this.toString());
             return;
         }
         if ( !this.loaded ) {
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
             return;
         }
         //EXPERIMENTAL - trying to figure out how to scale the container
@@ -108,18 +101,11 @@ $.Tile.prototype = {
             rendered;
 
         if (!this.context2D && !this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
-                this.toString());
             return;
         }
         rendered = this.context2D || this.cacheImageRecord.getRenderedContext();
 
         if ( !this.loaded || !rendered ){
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
 
             return;
         }
@@ -182,9 +168,6 @@ $.Tile.prototype = {
         } else if (this.context2D) {
             context = this.context2D;
         } else {
-            $.console.warn(
-                '[Tile.drawCanvas] attempting to get tile scale %s when tile\'s not cached',
-                this.toString());
             return 1;
         }
         return context.canvas.width / (this.size.x * $.pixelDensityRatio);

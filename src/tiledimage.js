@@ -4,13 +4,6 @@
 $.TiledImage = function( options ) {
     var _this = this;
 
-    $.console.assert( options.tileCache, "[TiledImage] options.tileCache is required" );
-    $.console.assert( options.drawer, "[TiledImage] options.drawer is required" );
-    $.console.assert( options.viewer, "[TiledImage] options.viewer is required" );
-    $.console.assert( options.imageLoader, "[TiledImage] options.imageLoader is required" );
-    $.console.assert( options.source, "[TiledImage] options.source is required" );
-    $.console.assert(!options.clip || options.clip instanceof $.Rect,
-        "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
 
@@ -43,7 +36,6 @@ $.TiledImage = function( options ) {
         delete options.width;
 
         if ( options.height ) {
-            $.console.error( "specifying both width and height to a tiledImage is not supported" );
             delete options.height;
         }
     } else if ( options.height ) {
@@ -188,7 +180,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
     },
     // deprecated
     getWorldBounds: function() {
-        $.console.error('[TiledImage.getWorldBounds] is deprecated; use TiledImage.getBounds instead');
         return this.getBounds();
     },
     getClippedBounds: function(current) {
@@ -408,8 +399,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         return null;
     },
     setClip: function(newClip) {
-        $.console.assert(!newClip || newClip instanceof $.Rect,
-            "[TiledImage.setClip] newClip must be an OpenSeadragon.Rect or null");
 
         if (newClip instanceof $.Rect) {
             this._clip = newClip.clone();
@@ -914,7 +903,6 @@ function loadTile( tiledImage, tile, time ) {
 }
 function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
-        $.console.log( "Tile %s failed to load: %s - error: %s", tile, tile.url, errorMsg );
 
         tiledImage.viewer.raiseEvent("tile-load-failed", {
             tile: tile,
@@ -928,7 +916,6 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
         return;
     }
     if ( time < tiledImage.lastResetTime ) {
-        $.console.log( "Ignoring tile %s loaded before reset: %s", tile, tile.url );
         tile.loading = false;
         return;
     }
@@ -1080,10 +1067,6 @@ function isCovered( coverage, level, x, y ) {
 }
 function setCoverage( coverage, level, x, y, covers ) {
     if ( !coverage[ level ] ) {
-        $.console.warn(
-            "Setting coverage for a tile before its level's coverage has been reset: %s",
-            level
-        );
         return;
     }
     if ( !coverage[ level ][ x ] ) {
@@ -1266,12 +1249,8 @@ function drawDebugInfo( tiledImage, lastDrawn ) {
     if( tiledImage.debugMode ) {
         for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
             var tile = lastDrawn[ i ];
-            try {
-                tiledImage._drawer.drawDebugInfo(
-                    tile, lastDrawn.length, i, tiledImage);
-            } catch(e) {
-                $.console.error(e);
-            }
+            tiledImage._drawer.drawDebugInfo(
+                tile, lastDrawn.length, i, tiledImage);
         }
     }
 }

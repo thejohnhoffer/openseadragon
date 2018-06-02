@@ -109,10 +109,6 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
 };
 $.TileSource.prototype = {
     getTileSize: function( level ) {
-        $.console.error(
-            "[TileSource.getTileSize] is deprecated." +
-            "Use TileSource.getTileWidth() and TileSource.getTileHeight() instead"
-        );
         return this._tileWidth;
     },
     getTileWidth: function( level ) {
@@ -168,9 +164,6 @@ $.TileSource.prototype = {
         return i - 1;
     },
     getTileAtPoint: function(level, point) {
-        var validPoint = point.x >= 0 && point.x <= 1 &&
-            point.y >= 0 && point.y <= 1 / this.aspectRatio;
-        $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
 
         var widthScaled = this.dimensions.x * this.getLevelScale(level);
         var pixelX = point.x * widthScaled;
@@ -355,6 +348,5 @@ $.TileSource.determineType = function( tileSource, data, url ){
             return OpenSeadragon[ property ];
         }
     }
-    $.console.error( "No TileSource was able to open %s %s", url, data );
 };
 }( OpenSeadragon ));

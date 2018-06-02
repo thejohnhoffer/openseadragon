@@ -2,7 +2,6 @@
 
 (function( $ ){
 $.Drawer = function( options ) {
-    $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
@@ -15,18 +14,10 @@ $.Drawer = function( options ) {
             element: args[ 2 ] // Parent element.
         };
     }
-    $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
-    $.console.assert( options.element, "[Drawer] options.element is required" );
 
-    if ( options.source ) {
-        $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
-    }
     this.viewer = options.viewer;
     this.viewport = options.viewport;
     this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-    if (options.opacity) {
-        $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
-    }
     this.useCanvas = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
 
     this.container = $.getElement( options.element );
@@ -59,7 +50,6 @@ $.Drawer = function( options ) {
 };
 $.Drawer.prototype = {
     setOpacity: function( opacity ) {
-        $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
         var world = this.viewer.world;
         for (var i = 0; i < world.getItemCount(); i++) {
             world.getItemAt( i ).setOpacity( opacity );
@@ -67,7 +57,6 @@ $.Drawer.prototype = {
         return this;
     },
     getOpacity: function() {
-        $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
         var world = this.viewer.world;
         var maxOpacity = 0;
         for (var i = 0; i < world.getItemCount(); i++) {
@@ -80,23 +69,19 @@ $.Drawer.prototype = {
     },
     // deprecated
     needsUpdate: function() {
-        $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
         return this.viewer.world.needsDraw();
     },
     // deprecated
     numTilesLoaded: function() {
-        $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
         return this.viewer.tileCache.numTilesLoaded();
     },
     // deprecated
     reset: function() {
-        $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
         this.viewer.world.resetItems();
         return this;
     },
     // deprecated
     update: function() {
-        $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
         this.clear();
         this.viewer.world.draw();
         return this;
@@ -152,8 +137,6 @@ $.Drawer.prototype = {
         );
     },
     drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
-        $.console.assert(tile, '[Drawer.drawTile] tile is required');
-        $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);

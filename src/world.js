@@ -3,7 +3,6 @@
 $.World = function( options ) {
     var _this = this;
 
-    $.console.assert( options.viewer, "[World] options.viewer is required" );
 
     $.EventSource.call( this );
 
@@ -23,8 +22,6 @@ $.World = function( options ) {
 };
 $.extend( $.World.prototype, $.EventSource.prototype, {
     addItem: function( item, options ) {
-        $.console.assert(item, "[World.addItem] item is required");
-        $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
 
         options = options || {};
         if (options.index !== undefined) {
@@ -48,19 +45,15 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
         } );
     },
     getItemAt: function( index ) {
-        $.console.assert(index !== undefined, "[World.getItemAt] index is required");
         return this._items[ index ];
     },
     getIndexOfItem: function( item ) {
-        $.console.assert(item, "[World.getIndexOfItem] item is required");
         return $.indexOf( this._items, item );
     },
     getItemCount: function() {
         return this._items.length;
     },
     setItemIndex: function( item, index ) {
-        $.console.assert(item, "[World.setItemIndex] item is required");
-        $.console.assert(index !== undefined, "[World.setItemIndex] index is required");
 
         var oldIndex = this.getIndexOfItem( item );
 
@@ -81,7 +74,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
         } );
     },
     removeItem: function( item ) {
-        $.console.assert(item, "[World.removeItem] item is required");
 
         var index = $.indexOf(this._items, item );
         if ( index === -1 ) {

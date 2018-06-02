@@ -3,16 +3,11 @@
 (function( $ ){
 // private class
 var TileRecord = function( options ) {
-    $.console.assert( options, "[TileCache.cacheTile] options is required" );
-    $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
-    $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
     this.tile = options.tile;
     this.tiledImage = options.tiledImage;
 };
 // private class
 var ImageRecord = function(options) {
-    $.console.assert( options, "[ImageRecord] options is required" );
-    $.console.assert( options.image, "[ImageRecord] options.image is required" );
     this._image = options.image;
     this._tiles = [];
 };
@@ -39,13 +34,9 @@ ImageRecord.prototype = {
         return this._renderedContext;
     },
     setRenderedContext: function(renderedContext) {
-        $.console.error("ImageRecord.setRenderedContext is deprecated. " +
-                "The rendered context should be created by the ImageRecord " +
-                "itself when calling ImageRecord.getRenderedContext.");
         this._renderedContext = renderedContext;
     },
     addTile: function(tile) {
-        $.console.assert(tile, '[ImageRecord.addTile] tile is required');
         this._tiles.push(tile);
     },
     removeTile: function(tile) {
@@ -55,7 +46,6 @@ ImageRecord.prototype = {
                 return;
             }
         }
-        $.console.warn('[ImageRecord.removeTile] trying to remove unknown tile', tile);
     },
     getTileCount: function() {
         return this._tiles.length;
@@ -73,17 +63,12 @@ $.TileCache.prototype = {
         return this._tilesLoaded.length;
     },
     cacheTile: function( options ) {
-        $.console.assert( options, "[TileCache.cacheTile] options is required" );
-        $.console.assert( options.tile, "[TileCache.cacheTile] options.tile is required" );
-        $.console.assert( options.tile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required" );
-        $.console.assert( options.tiledImage, "[TileCache.cacheTile] options.tiledImage is required" );
 
         var cutoff = options.cutoff || 0;
         var insertionIndex = this._tilesLoaded.length;
 
         var imageRecord = this._imagesLoaded[options.tile.cacheKey];
         if (!imageRecord) {
-            $.console.assert( options.image, "[TileCache.cacheTile] options.image is required to create an ImageRecord" );
             imageRecord = this._imagesLoaded[options.tile.cacheKey] = new ImageRecord({
                 image: options.image
             });
@@ -135,7 +120,6 @@ $.TileCache.prototype = {
         });
     },
     clearTilesFor: function( tiledImage ) {
-        $.console.assert(tiledImage, '[TileCache.clearTilesFor] tiledImage is required');
         var tileRecord;
         for ( var i = 0; i < this._tilesLoaded.length; ++i ) {
             tileRecord = this._tilesLoaded[ i ];
@@ -148,12 +132,10 @@ $.TileCache.prototype = {
     },
     // private
     getImageRecord: function(cacheKey) {
-        $.console.assert(cacheKey, '[TileCache.getImageRecord] cacheKey is required');
         return this._imagesLoaded[cacheKey];
     },
     // private
     _unloadTile: function(tileRecord) {
-        $.console.assert(tileRecord, '[TileCache._unloadTile] tileRecord is required');
         var tile = tileRecord.tile;
         var tiledImage = tileRecord.tiledImage;
 

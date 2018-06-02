@@ -75,7 +75,6 @@ $.Viewer = function( options ) {
     if ( typeof ( THIS[ this.hash ] ) !== "undefined" ) {
         // We don't want to throw an error here, as the user might have discarded
         // the previous viewer with the same hash and now want to recreate it.
-        $.console.warn("Hash " + this.hash + " has already been used.");
     }
     //Private state properties
     THIS[ this.hash ] = {
@@ -253,12 +252,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     },
     // deprecated
     openDzi: function ( dzi ) {
-        $.console.error( "[Viewer.openDzi] this function is deprecated; use Viewer.open() instead." );
         return this.open( dzi );
     },
     // deprecated
     openTileSource: function ( tileSource ) {
-        $.console.error( "[Viewer.openTileSource] this function is deprecated; use Viewer.open() instead." );
         return this.open( tileSource );
     },
     open: function (tileSources, initialPage) {
@@ -322,7 +319,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                 };
             }
             if (options.index !== undefined) {
-                $.console.error('[Viewer.open] setting indexes here is not supported; use addTiledImage instead');
                 delete options.index;
             }
             if (options.collectionImmediately === undefined) {
@@ -654,10 +650,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         return this;
     },
     addTiledImage: function( options ) {
-        $.console.assert(options, "[Viewer.addTiledImage] options is required");
-        $.console.assert(options.tileSource, "[Viewer.addTiledImage] options.tileSource is required");
-        $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
-            "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
 
         var _this = this;
 
@@ -833,8 +825,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         } );
     },
     addSimpleImage: function(options) {
-        $.console.assert(options, "[Viewer.addSimpleImage] options is required");
-        $.console.assert(options.url, "[Viewer.addSimpleImage] options.url is required");
 
         var opts = $.extend({}, options, {
             tileSource: {
@@ -849,7 +839,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     addLayer: function( options ) {
         var _this = this;
 
-        $.console.error( "[Viewer.addLayer] this function is deprecated; use Viewer.addTiledImage() instead." );
 
         var optionsClone = $.extend({}, options, {
             success: function(event) {
@@ -867,27 +856,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     },
     // deprecated
     getLayerAtLevel: function( level ) {
-        $.console.error( "[Viewer.getLayerAtLevel] this function is deprecated; use World.getItemAt() instead." );
         return this.world.getItemAt(level);
     },
     // deprecated
     getLevelOfLayer: function( drawer ) {
-        $.console.error( "[Viewer.getLevelOfLayer] this function is deprecated; use World.getIndexOfItem() instead." );
         return this.world.getIndexOfItem(drawer);
     },
     // deprecated
     getLayersCount: function() {
-        $.console.error( "[Viewer.getLayersCount] this function is deprecated; use World.getItemCount() instead." );
         return this.world.getItemCount();
     },
     // deprecated
     setLayerLevel: function( drawer, level ) {
-        $.console.error( "[Viewer.setLayerLevel] this function is deprecated; use World.setItemIndex() instead." );
         return this.world.setItemIndex(drawer, level);
     },
     // deprecated
     removeLayer: function( drawer ) {
-        $.console.error( "[Viewer.removeLayer] this function is deprecated; use World.removeItem() instead." );
         return this.world.removeItem(drawer);
     },
     forceRedraw: function() {

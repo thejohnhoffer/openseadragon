@@ -80,17 +80,12 @@ $.Viewport = function( options ) {
 };
 $.Viewport.prototype = {
     resetContentSize: function(contentSize) {
-        $.console.assert(contentSize, "[Viewport.resetContentSize] contentSize is required");
-        $.console.assert(contentSize instanceof $.Point, "[Viewport.resetContentSize] contentSize must be an OpenSeadragon.Point");
-        $.console.assert(contentSize.x > 0, "[Viewport.resetContentSize] contentSize.x must be greater than 0");
-        $.console.assert(contentSize.y > 0, "[Viewport.resetContentSize] contentSize.y must be greater than 0");
 
         this._setContentBounds(new $.Rect(0, 0, 1, contentSize.y / contentSize.x), contentSize.x);
         return this;
     },
     // deprecated
     setHomeBounds: function(bounds, contentFactor) {
-        $.console.error("[Viewport.setHomeBounds] this function is deprecated; The content bounds should not be set manually.");
         this._setContentBounds(bounds, contentFactor);
     },
     // Set the viewport's content bounds
@@ -100,10 +95,6 @@ $.Viewport.prototype = {
     // @fires OpenSeadragon.Viewer.event:reset-size
     // @private
     _setContentBounds: function(bounds, contentFactor) {
-        $.console.assert(bounds, "[Viewport._setContentBounds] bounds is required");
-        $.console.assert(bounds instanceof $.Rect, "[Viewport._setContentBounds] bounds must be an OpenSeadragon.Rect");
-        $.console.assert(bounds.width > 0, "[Viewport._setContentBounds] bounds.width must be greater than 0");
-        $.console.assert(bounds.height > 0, "[Viewport._setContentBounds] bounds.height must be greater than 0");
 
         this._contentBoundsNoRotate = bounds.clone();
         this._contentSizeNoRotate = this._contentBoundsNoRotate.getSize().times(
@@ -187,7 +178,6 @@ $.Viewport.prototype = {
         return $.extend({}, this._margins); // Make a copy so we are not returning our original
     },
     setMargins: function(margins) {
-        $.console.assert($.type(margins) === 'object', '[Viewport.setMargins] margins must be an object');
 
         this._margins = $.extend({
             left: 0,
@@ -663,17 +653,8 @@ $.Viewport.prototype = {
             return this.viewportToImageCoordinates(viewerX.x, viewerX.y);
         }
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.viewportToImageCoordinates] is not accurate ' +
-                    'with multi-image; use TiledImage.viewportToImageCoordinates instead.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.viewportToImageCoordinates
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.viewportToImageCoordinates(viewerX, viewerY, true);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.viewportToImageCoordinates(viewerX, viewerY, true);
         }
         return this._viewportToImageDelta(
             viewerX - this._contentBoundsNoRotate.x,
@@ -692,17 +673,8 @@ $.Viewport.prototype = {
             return this.imageToViewportCoordinates(imageX.x, imageX.y);
         }
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.imageToViewportCoordinates] is not accurate ' +
-                    'with multi-image; use TiledImage.imageToViewportCoordinates instead.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.viewportToImageCoordinates
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.imageToViewportCoordinates(imageX, imageY, true);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.imageToViewportCoordinates(imageX, imageY, true);
         }
         var point = this._imageToViewportDelta(imageX, imageY);
         point.x += this._contentBoundsNoRotate.x;
@@ -716,18 +688,9 @@ $.Viewport.prototype = {
             rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.imageToViewportRectangle] is not accurate ' +
-                    'with multi-image; use TiledImage.imageToViewportRectangle instead.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.imageToViewportRectangle
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.imageToViewportRectangle(
-                    imageX, imageY, pixelWidth, pixelHeight, true);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.imageToViewportRectangle(
+                imageX, imageY, pixelWidth, pixelHeight, true);
         }
         var coordA = this.imageToViewportCoordinates(rect.x, rect.y);
         var coordB = this._imageToViewportDelta(rect.width, rect.height);
@@ -746,18 +709,9 @@ $.Viewport.prototype = {
             rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.viewportToImageRectangle] is not accurate ' +
-                    'with multi-image; use TiledImage.viewportToImageRectangle instead.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.viewportToImageCoordinates
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.viewportToImageRectangle(
-                    viewerX, viewerY, pointWidth, pointHeight, true);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.viewportToImageRectangle(
+                viewerX, viewerY, pointWidth, pointHeight, true);
         }
         var coordA = this.viewportToImageCoordinates(rect.x, rect.y);
         var coordB = this._viewportToImageDelta(rect.width, rect.height);
@@ -778,15 +732,11 @@ $.Viewport.prototype = {
         return this.pixelFromPoint( point, true );
     },
     windowToImageCoordinates: function(pixel) {
-        $.console.assert(this.viewer,
-            "[Viewport.windowToImageCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = pixel.minus(
                 $.getElementPosition(this.viewer.element));
         return this.viewerElementToImageCoordinates(viewerCoordinates);
     },
     imageToWindowCoordinates: function(pixel) {
-        $.console.assert(this.viewer,
-            "[Viewport.imageToWindowCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = this.imageToViewerElementCoordinates(pixel);
         return viewerCoordinates.plus(
                 $.getElementPosition(this.viewer.element));
@@ -812,32 +762,19 @@ $.Viewport.prototype = {
         );
     },
     windowToViewportCoordinates: function(pixel) {
-        $.console.assert(this.viewer,
-            "[Viewport.windowToViewportCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = pixel.minus(
                 $.getElementPosition(this.viewer.element));
         return this.viewerElementToViewportCoordinates(viewerCoordinates);
     },
     viewportToWindowCoordinates: function(point) {
-        $.console.assert(this.viewer,
-            "[Viewport.viewportToWindowCoordinates] the viewport must have a viewer.");
         var viewerCoordinates = this.viewportToViewerElementCoordinates(point);
         return viewerCoordinates.plus(
                 $.getElementPosition(this.viewer.element));
     },
     viewportToImageZoom: function(viewportZoom) {
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.viewportToImageZoom] is not ' +
-                    'accurate with multi-image.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.viewportToImageZoom
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.viewportToImageZoom(viewportZoom);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.viewportToImageZoom(viewportZoom);
         }
         var imageWidth = this._contentSizeNoRotate.x;
         var containerWidth = this._containerInnerSize.x;
@@ -847,17 +784,8 @@ $.Viewport.prototype = {
     },
     imageToViewportZoom: function(imageZoom) {
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
-            if (count > 1) {
-                $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
-                    'with multi-image.');
-            } else if (count === 1) {
-                // It is better to use TiledImage.imageToViewportZoom
-                // because this._contentBoundsNoRotate can not be relied on
-                // with clipping.
-                var item = this.viewer.world.getItemAt(0);
-                return item.imageToViewportZoom(imageZoom);
-            }
+            var item = this.viewer.world.getItemAt(0);
+            return item.imageToViewportZoom(imageZoom);
         }
         var imageWidth = this._contentSizeNoRotate.x;
         var containerWidth = this._containerInnerSize.x;

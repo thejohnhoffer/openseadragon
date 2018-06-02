@@ -75,7 +75,6 @@ $.EventSource.prototype = {
     },
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
-        //$.console.log( eventName );
         var handler = this.getHandler( eventName );
 
         if ( handler ) {

@@ -985,7 +985,6 @@ function OpenSeadragon( options ){
                           protocol !== "https:" )) {
                         onSuccess( request );
                     } else {
-                        $.console.log( "AJAX request returned %d: %s", request.status, url );
 
                         if ( $.isFunction( onError ) ) {
                             onError( request );
@@ -1011,12 +1010,6 @@ function OpenSeadragon( options ){
                 }
                 request.send(null);
             } catch (e) {
-                var msg = e.message;
-                var oldIE = $.Browser.vendor == $.BROWSERS.IE && $.Browser.version < 10;
-                if ( oldIE && typeof ( e.number ) != "undefined" && e.number == -2147024891 ) {
-                    msg += "\nSee http://msdn.microsoft.com/en-us/library/ms537505(v=vs.85).aspx#xdomain";
-                }
-                $.console.log( "%s while making AJAX request: %s", e.name, msg );
 
                 request.onreadystatechange = function(){};
                 if (window.XDomainRequest) { // IE9 or IE8 might as well try to use XDomainRequest
@@ -1183,10 +1176,6 @@ function OpenSeadragon( options ){
         var ver = navigator.appVersion,
             ua = navigator.userAgent,
             regex;
-
-        //console.error( 'appName: ' + navigator.appName );
-        //console.error( 'appVersion: ' + navigator.appVersion );
-        //console.error( 'userAgent: ' + navigator.userAgent );
 
         switch( navigator.appName ){
             case "Microsoft Internet Explorer":
