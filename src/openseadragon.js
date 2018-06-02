@@ -54,17 +54,6 @@ function OpenSeadragon( options ){
         }
         return lastKey === undefined || hasOwn.call( obj, lastKey );
     };
-    $.isCanvasTainted = function(canvas) {
-        var isTainted = false;
-        try {
-            // We test if the canvas is tainted by retrieving data from it.
-            // An exception will be raised if the canvas is tainted.
-            canvas.getContext('2d').getImageData(0, 0, 1, 1);
-        } catch (e) {
-            isTainted = true;
-        }
-        return isTainted;
-    };
     $.pixelDensityRatio = (function () {
         var context = document.createElement('canvas').getContext('2d');
         var devicePixelRatio = window.devicePixelRatio || 1;
