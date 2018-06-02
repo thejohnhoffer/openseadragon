@@ -264,7 +264,6 @@ function OpenSeadragon( options ){
             zoomPerSecond: 1.0,
             blendTime: 0,
             alwaysBlend: false,
-            autoHideControls: true,
             immediateRender: false,
             minZoomImageRatio: 0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio: 1.1, //-> higher allows 'over zoom' into pixels
@@ -276,19 +275,8 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime: 50,
 
-            //DEFAULT CONTROL SETTINGS
-            showSequenceControl: true, //SEQUENCE
-            sequenceControlAnchor: null, //SEQUENCE
             preserveViewport: false, //SEQUENCE
             navPrevNextWrap: false, //SEQUENCE
-            showNavigationControl: true, //ZOOM/HOME/FULL/ROTATION
-            navigationControlAnchor: null, //ZOOM/HOME/FULL/ROTATION
-            showZoomControl: true, //ZOOM
-            showHomeControl: true, //HOME
-            showFullPageControl: true, //FULL
-            showRotationControl: false, //ROTATION
-            controlsFadeDelay: 2000, //ZOOM/HOME/FULL/SEQUENCE
-            controlsFadeLength: 1500, //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled: true, //GENERAL MOUSE INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS

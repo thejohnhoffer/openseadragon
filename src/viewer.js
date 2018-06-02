@@ -7,8 +7,7 @@ var nextHash = 1;
 
 $.Viewer = function( options ) {
     var args = arguments,
-        _this = this,
-        i;
+        _this = this;
 
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
@@ -16,8 +15,7 @@ $.Viewer = function( options ) {
         options = {
             id: args[ 0 ],
             xmlPath: args.length > 1 ? args[ 1 ] : undefined,
-            prefixUrl: args.length > 2 ? args[ 2 ] : undefined,
-            controls: args.length > 3 ? args[ 3 ] : undefined
+            prefixUrl: args.length > 2 ? args[ 2 ] : undefined
         };
     }
     //options.config and the general config argument are deprecated
@@ -46,14 +44,6 @@ $.Viewer = function( options ) {
 
         //private state properties
         previousBody: [],
-
-        //This was originally initialized in the constructor and so could never
-        //have anything in it. now it can because we allow it to be specified
-        //in the options and is only empty by default if not specified. Also
-        //this array was returned from get_controls which I find confusing
-        //since this object has a controls property which is treated in other
-        //functions like clearControls. I'm removing the accessors.
-        customControls: [],
 
         //These are originally not part options but declared as members
         //in initialize. It's still considered idiomatic to put them here
@@ -117,7 +107,6 @@ $.Viewer = function( options ) {
         var msg = $.getString( "Errors.OpenFailed", event.eventSource, event.message);
         _this._showMessage( msg );
     });
-    $.ControlDock.call( this, options );
 
     //Deal with tile sources
     if (this.xmlPath) {
@@ -140,7 +129,6 @@ $.Viewer = function( options ) {
     if (options.tabIndex !== "") {
         this.canvas.tabIndex = (options.tabIndex === undefined ? 0 : options.tabIndex);
     }
-    //the container is created through applying the ControlDock constructor above
     this.container.className = "openseadragon-container";
     (function( style ){
         style.width = "100%";
@@ -161,11 +149,6 @@ $.Viewer = function( options ) {
     this.bodyHeight = document.body.style.height;
     this.bodyOverflow = document.body.style.overflow;
     this.docOverflow = document.documentElement.style.overflow;
-
-    if( this.toolbar ){
-        this.toolbar = new $.ControlDock({ element: this.toolbar });
-    }
-    this.bindStandardControls();
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
@@ -258,27 +241,12 @@ $.Viewer = function( options ) {
             crossOriginPolicy: this.crossOriginPolicy
         });
     }
-    // Sequence mode
-    if (this.sequenceMode) {
-        this.bindSequenceControls();
-    }
     // Open initial tilesources
     if (this.tileSources) {
         this.open( this.tileSources );
     }
-    // Add custom controls
-    for ( i = 0; i < this.customControls.length; i++ ) {
-        this.addControl(
-            this.customControls[ i ].id,
-            {anchor: this.customControls[ i ].anchor}
-        );
-    }
-    // Initial fade out
-    $.requestAnimationFrame( function(){
-        beginControlsAutoHide( _this );
-    } );
 };
-$.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, {
+$.extend( $.Viewer.prototype, $.EventSource.prototype, {
 
     isOpen: function () {
         return !!this.world.getItemCount();
@@ -413,11 +381,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         this.close();
 
-
-        //TODO: implement this...
-        //this.unbindSequenceControls()
-        //this.unbindStandardControls()
-
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
             this._updateRequestId = null;
@@ -449,23 +412,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         return false;
     },
     setMouseNavEnabled: function( enabled ){
-        return this;
-    },
-    areControlsEnabled: function () {
-        var enabled = this.controls.length,
-            i;
-        for( i = 0; i < this.controls.length; i++ ){
-            enabled = enabled && this.controls[ i ].isVisibile();
-        }
-        return enabled;
-    },
-    setControlsEnabled: function( enabled ) {
-        if( enabled ){
-            abortControlsAutoHide( this );
-        } else {
-            beginControlsAutoHide( this );
-        }
-        this.raiseEvent( 'controls-enabled', { enabled: enabled } );
         return this;
     },
     setDebugMode: function(debugMode){
@@ -948,19 +894,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         THIS[ this.hash ].forceRedraw = true;
         return this;
     },
-    bindSequenceControls: function(){
-        //////////////////////////////////////////////////////////////////////////
-        // Image Sequence Controls
-        //////////////////////////////////////////////////////////////////////////
-
-        return this;
-    },
-    bindStandardControls: function(){
-        //////////////////////////////////////////////////////////////////////////
-        // Navigation Controls
-        //////////////////////////////////////////////////////////////////////////
-        return this;
-    },
     currentPage: function() {
         return this._sequenceIndex;
     },
@@ -1112,65 +1045,11 @@ function scheduleUpdate( viewer, updateFunc ){
         updateFunc( viewer );
     } );
 }
-//provides a sequence in the fade animation
-function scheduleControlsFade( viewer ) {
-    $.requestAnimationFrame( function(){
-        updateControlsFade( viewer );
-    });
-}
-//initiates an animation to hide the controls
-function beginControlsAutoHide( viewer ) {
-    if ( !viewer.autoHideControls ) {
-        return;
-    }
-    viewer.controlsShouldFade = true;
-    viewer.controlsFadeBeginTime =
-        $.now() +
-        viewer.controlsFadeDelay;
-
-    window.setTimeout( function(){
-        scheduleControlsFade( viewer );
-    }, viewer.controlsFadeDelay );
-}
-//determines if fade animation is done or continues the animation
-function updateControlsFade( viewer ) {
-    var currentTime,
-        deltaTime,
-        opacity,
-        i;
-    if ( viewer.controlsShouldFade ) {
-        currentTime = $.now();
-        deltaTime = currentTime - viewer.controlsFadeBeginTime;
-        opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
-
-        opacity = Math.min( 1.0, opacity );
-        opacity = Math.max( 0.0, opacity );
-
-        for ( i = viewer.controls.length - 1; i >= 0; i--) {
-            if (viewer.controls[ i ].autoFade) {
-                viewer.controls[ i ].setOpacity( opacity );
-            }
-        }
-        if ( opacity > 0 ) {
-            // fade again
-            scheduleControlsFade( viewer );
-        }
-    }
-}
-//stop the fade animation on the controls and show them
-function abortControlsAutoHide( viewer ) {
-    var i;
-    viewer.controlsShouldFade = false;
-    for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
-        viewer.controls[ i ].setOpacity( 1.0 );
-    }
-}
 ///////////////////////////////////////////////////////////////////////////////
 // Default view event handlers.
 ///////////////////////////////////////////////////////////////////////////////
 function onContainerEnter( event ) {
     THIS[ this.hash ].mouseInside = true;
-    abortControlsAutoHide( this );
 
     this.raiseEvent( 'container-enter', {
         position: event.position,
@@ -1182,9 +1061,6 @@ function onContainerEnter( event ) {
 function onContainerExit( event ) {
     if ( event.pointers < 1 ) {
         THIS[ this.hash ].mouseInside = false;
-        if ( !THIS[ this.hash ].animating ) {
-            beginControlsAutoHide( this );
-        }
     }
     this.raiseEvent( 'container-exit', {
         position: event.position,
@@ -1243,7 +1119,6 @@ function updateOnce( viewer ) {
     }
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animation-start" );
-        abortControlsAutoHide( viewer );
     }
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
@@ -1258,10 +1133,6 @@ function updateOnce( viewer ) {
     }
     if ( THIS[ viewer.hash ].animating && !animated ) {
         viewer.raiseEvent( "animation-finish" );
-
-        if ( !THIS[ viewer.hash ].mouseInside ) {
-            beginControlsAutoHide( viewer );
-        }
     }
     THIS[ viewer.hash ].animating = animated;
 
@@ -1274,7 +1145,7 @@ function drawWorld( viewer ) {
     viewer.raiseEvent( 'update-viewport', {} );
 }
 ///////////////////////////////////////////////////////////////////////////////
-// Navigation Controls
+// Navigation
 ///////////////////////////////////////////////////////////////////////////////
 function scheduleZoom( viewer ) {
     $.requestAnimationFrame( $.delegate( viewer, doZoom ) );

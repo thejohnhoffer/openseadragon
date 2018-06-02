@@ -3,44 +3,15 @@
 (function( $ ){
 $.Navigator = function( options ){
     var viewer = options.viewer,
-        _this = this,
-        viewerSize,
-        navigatorSize;
+        _this = this;
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
     if( !options.id ){
         options.id = 'navigator-' + $.now();
         this.element = $.makeNeutralElement( "div" );
-        options.controlOptions = {
-            anchor: $.ControlAnchor.TOP_RIGHT,
-            attachToViewer: true,
-            autoFade: options.autoFade
-        };
-        if( options.position ){
-            if( 'BOTTOM_RIGHT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_RIGHT;
-            } else if( 'BOTTOM_LEFT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.BOTTOM_LEFT;
-            } else if( 'TOP_RIGHT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.TOP_RIGHT;
-            } else if( 'TOP_LEFT' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.TOP_LEFT;
-            } else if( 'ABSOLUTE' == options.position ){
-               options.controlOptions.anchor = $.ControlAnchor.ABSOLUTE;
-               options.controlOptions.top = options.top;
-               options.controlOptions.left = options.left;
-               options.controlOptions.height = options.height;
-               options.controlOptions.width = options.width;
-            }
-        }
     } else {
         this.element = document.getElementById( options.id );
-        options.controlOptions = {
-            anchor: $.ControlAnchor.NONE,
-            attachToViewer: false,
-            autoFade: false
-        };
     }
     this.element.id = options.id;
     this.element.className += ' navigator';
@@ -54,8 +25,6 @@ $.Navigator = function( options ){
         //the navigator is a viewer and a viewer has a navigator
         showNavigator: false,
         mouseNavEnabled: false,
-        showNavigationControl: false,
-        showSequenceControl: false,
         immediateRender: true,
         blendTime: 0,
         animationTime: 0,
@@ -73,16 +42,6 @@ $.Navigator = function( options ){
     this.fudge = new $.Point(1, 1);
     this.totalBorderWidths = new $.Point(this.borderWidth * 2, this.borderWidth * 2).minus(this.fudge);
 
-    if ( options.controlOptions.anchor != $.ControlAnchor.NONE ) {
-        (function( style, borderWidth ){
-            style.margin = '0px';
-            style.border = borderWidth + 'px solid #555';
-            style.padding = '0px';
-            style.background = '#000';
-            style.opacity = 0.8;
-            style.overflow = 'hidden';
-        }( this.element.style, this.borderWidth));
-    }
     this.displayRegion = $.makeNeutralElement( "div" );
     this.displayRegion.id = this.element.id + '-displayregion';
     this.displayRegion.className = 'displayregion';
@@ -116,27 +75,6 @@ $.Navigator = function( options ){
     this.displayRegionContainer.style.width = "100%";
     this.displayRegionContainer.style.height = "100%";
 
-    viewer.addControl(
-        this.element,
-        options.controlOptions
-    );
-
-    this._resizeWithViewer = options.controlOptions.anchor != $.ControlAnchor.ABSOLUTE &&
-        options.controlOptions.anchor != $.ControlAnchor.NONE;
-
-    if ( this._resizeWithViewer ) {
-        if ( options.width && options.height ) {
-            this.element.style.height = typeof (options.height) == "number" ? (options.height + 'px') : options.height;
-            this.element.style.width = typeof (options.width) == "number" ? (options.width + 'px') : options.width;
-        } else {
-            viewerSize = $.getElementSize( viewer.element );
-            this.element.style.height = Math.round( viewerSize.y * options.sizeRatio ) + 'px';
-            this.element.style.width = Math.round( viewerSize.x * options.sizeRatio ) + 'px';
-            this.oldViewerSize = viewerSize;
-        }
-        navigatorSize = $.getElementSize( this.element );
-        this.elementArea = navigatorSize.x * navigatorSize.y;
-    }
     this.oldContainerSize = new $.Point( 0, 0 );
 
     $.Viewer.apply( this, [ options ] );
@@ -206,32 +144,10 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
         }
     },
     update: function( viewport ) {
-        var viewerSize,
-            newWidth,
-            newHeight,
-            bounds,
+        var bounds,
             topleft,
             bottomright;
 
-        viewerSize = $.getElementSize( this.viewer.element );
-        if ( this._resizeWithViewer && viewerSize.x && viewerSize.y && !viewerSize.equals( this.oldViewerSize ) ) {
-            this.oldViewerSize = viewerSize;
-
-            if ( this.maintainSizeRatio || !this.elementArea) {
-                newWidth = viewerSize.x * this.sizeRatio;
-                newHeight = viewerSize.y * this.sizeRatio;
-            } else {
-                newWidth = Math.sqrt(this.elementArea * (viewerSize.x / viewerSize.y));
-                newHeight = this.elementArea / newWidth;
-            }
-            this.element.style.width = Math.round( newWidth ) + 'px';
-            this.element.style.height = Math.round( newHeight ) + 'px';
-
-            if (!this.elementArea) {
-                this.elementArea = newWidth * newHeight;
-            }
-            this.updateSize();
-        }
         if (viewport && this.viewport) {
             bounds = viewport.getBoundsNoRotate(true);
             topleft = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
