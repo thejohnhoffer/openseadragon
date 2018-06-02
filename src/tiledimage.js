@@ -72,13 +72,7 @@ $.TiledImage = function( options ) {
         iOSDevice: $.DEFAULT_SETTINGS.iOSDevice,
         crossOriginPolicy: $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials: $.DEFAULT_SETTINGS.ajaxWithCredentials,
-        placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
-        opacity: $.DEFAULT_SETTINGS.opacity,
-        preload: $.DEFAULT_SETTINGS.preload,
-        compositeOperation: $.DEFAULT_SETTINGS.compositeOperation
     }, options );
-    this._preload = this.preload;
-    delete this.preload;
 
     this._fullyLoaded = false;
 
@@ -147,15 +141,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         return false;
     },
     draw: function() {
-        if (this.opacity !== 0 || this._preload) {
-            this._midDraw = true;
-            this._updateViewport();
-            this._midDraw = false;
-        }
-        // Images with opacity 0 should not need to be drawn in future. this._needsDraw = false is set in this._updateViewport() for other images.
-        else {
-            this._needsDraw = false;
-        }
+        this._midDraw = true;
+        this._updateViewport();
+        this._midDraw = false;
     },
     destroy: function() {
         this.reset();
@@ -408,27 +396,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
 
         this.raiseEvent('clip-change');
     },
-    getOpacity: function() {
-        return this.opacity;
-    },
-    setOpacity: function(opacity) {
-        if (opacity === this.opacity) {
-            return;
-        }
-        this.opacity = opacity;
-        this._needsDraw = true;
-
-        this.raiseEvent('opacity-change', {
-            opacity: this.opacity
-        });
-    },
-    getPreload: function() {
-        return this._preload;
-    },
-    setPreload: function(preload) {
-        this._preload = !!preload;
-        this._needsDraw = true;
-    },
     getRotation: function(current) {
         return current ?
             this._degreesSpring.current.value :
@@ -449,20 +416,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
     },
     _getRotationPoint: function(current) {
         return this.getBoundsNoRotate(current).getCenter();
-    },
-    getCompositeOperation: function() {
-        return this.compositeOperation;
-    },
-    setCompositeOperation: function(compositeOperation) {
-        if (compositeOperation === this.compositeOperation) {
-            return;
-        }
-        this.compositeOperation = compositeOperation;
-        this._needsDraw = true;
-
-        this.raiseEvent('composite-operation-change', {
-            compositeOperation: this.compositeOperation
-        });
     },
     // private
     _setScale: function(scale, immediately) {
@@ -587,7 +540,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             ).x * this._scaleSpring.current.value;
 
             var optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
-            var levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
             var levelVisibility = optimalRatio / Math.abs(
                 optimalRatio - targetRenderPixelRatio
             );
@@ -598,7 +550,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
                 haveDrawn,
                 drawLevel,
                 level,
-                levelOpacity,
                 levelVisibility,
                 drawArea,
                 currentTime,
@@ -662,7 +613,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         };
     }
 });
-function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
+function updateLevel(tiledImage, haveDrawn, drawLevel, level,
     levelVisibility, drawArea, currentTime, best) {
     var topLeftBound = drawArea.getBoundingBox().getTopLeft();
     var bottomRightBound = drawArea.getBoundingBox().getBottomRight();
@@ -672,7 +623,6 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
             tiledImage: tiledImage,
             havedrawn: haveDrawn,
             level: level,
-            opacity: levelOpacity,
             visibility: levelVisibility,
             drawArea: drawArea,
             topleft: topLeftBound,
@@ -709,7 +659,6 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
                 haveDrawn,
                 x, y,
                 level,
-                levelOpacity,
                 levelVisibility,
                 viewportCenter,
                 numberOfTiles,
@@ -721,7 +670,7 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level, levelOpacity,
     }
     return best;
 }
-function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
+function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
     var tile = getTile(
             x, y,
             level,
@@ -785,7 +734,6 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelOpacity
             tile,
             x, y,
             level,
-            levelOpacity,
             currentTime
         );
 
@@ -998,30 +946,16 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     tile.squaredDistance = tileSquaredDistance;
     tile.visibility = levelVisibility;
 }
-function blendTile( tiledImage, tile, x, y, level, levelOpacity, currentTime ){
-    var blendTimeMillis = 1000 * tiledImage.blendTime,
-        deltaTime,
-        opacity;
+function blendTile( tiledImage, tile, x, y, level, currentTime ){
 
     if ( !tile.blendStart ) {
         tile.blendStart = currentTime;
     }
-    deltaTime = currentTime - tile.blendStart;
-    opacity = blendTimeMillis ? Math.min( 1, deltaTime / ( blendTimeMillis ) ) : 1;
-
-    if ( tiledImage.alwaysBlend ) {
-        opacity *= levelOpacity;
-    }
-    tile.opacity = opacity;
 
     tiledImage.lastDrawn.push( tile );
 
-    if ( opacity == 1 ) {
-        setCoverage( tiledImage.coverage, level, x, y, true );
-        tiledImage._hasOpaqueTile = true;
-    } else if ( deltaTime < blendTimeMillis ) {
-        return true;
-    }
+    setCoverage( tiledImage.coverage, level, x, y, true );
+    tiledImage._hasOpaqueTile = true;
     return false;
 }
 function providesCoverage( coverage, level, x, y ) {
@@ -1090,17 +1024,14 @@ function compareTiles( previousBest, tile ) {
     return previousBest;
 }
 function drawTiles( tiledImage, lastDrawn ) {
-    if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
+    if (lastDrawn.length === 0) {
         return;
     }
     var tile = lastDrawn[0];
     var useSketch;
 
     if (tile) {
-        useSketch = tiledImage.opacity < 1 ||
-            (tiledImage.compositeOperation &&
-                tiledImage.compositeOperation !== 'source-over') ||
-            (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
+        useSketch = !tiledImage._isBottomItem() && tile._hasTransparencyChannel();
     }
     var sketchScale;
     var sketchTranslate;
@@ -1168,23 +1099,6 @@ function drawTiles( tiledImage, lastDrawn ) {
 
         usedClip = true;
     }
-    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
-        var placeholderRect = tiledImage._drawer.viewportToDrawerRectangle(tiledImage.getBounds(true));
-        if (sketchScale) {
-            placeholderRect = placeholderRect.times(sketchScale);
-        }
-        if (sketchTranslate) {
-            placeholderRect = placeholderRect.translate(sketchTranslate);
-        }
-        var fillStyle = null;
-        if ( typeof tiledImage.placeholderFillStyle === "function" ) {
-            fillStyle = tiledImage.placeholderFillStyle(tiledImage, tiledImage._drawer.context);
-        }
-        else {
-            fillStyle = tiledImage.placeholderFillStyle;
-        }
-        tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
-    }
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
         tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
@@ -1226,10 +1140,8 @@ function drawTiles( tiledImage, lastDrawn ) {
             }
         }
         tiledImage._drawer.blendSketch({
-            opacity: tiledImage.opacity,
             scale: sketchScale,
             translate: sketchTranslate,
-            compositeOperation: tiledImage.compositeOperation,
             bounds: bounds
         });
         if (sketchScale) {

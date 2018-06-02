@@ -43,7 +43,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
 
     this.blendStart = null;
 
-    this.opacity = null;
 
     this.squaredDistance = null;
 
@@ -93,7 +92,6 @@ $.Tile.prototype = {
         this.style.height = this.size.y + "px";
         this.style.width = this.size.x + "px";
 
-        $.setElementOpacity( this.element, this.opacity );
     },
     drawCanvas: function( context, drawingHandler, scale, translate ) {
         var position = this.position.times($.pixelDensityRatio),
@@ -111,8 +109,6 @@ $.Tile.prototype = {
         }
         context.save();
 
-        context.globalAlpha = this.opacity;
-
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
             position = position.times(scale);
@@ -126,7 +122,7 @@ $.Tile.prototype = {
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 && this._hasTransparencyChannel()) {
+        if (this._hasTransparencyChannel()) {
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(

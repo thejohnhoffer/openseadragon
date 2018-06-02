@@ -252,15 +252,6 @@ function OpenSeadragon( options ){
             // INITIAL ROTATION
             degrees: 0,
 
-            // APPEARANCE
-            opacity: 1,
-            preload: false,
-            compositeOperation: null,
-            placeholderFillStyle: null,
-
-            //REFERENCE STRIP SETTINGS
-            show: false,
-
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows: 3, //or columns depending on layout
             collectionColumns: 0, //columns in horizontal layout, rows in vertical layout
@@ -272,61 +263,7 @@ function OpenSeadragon( options ){
             //PERFORMANCE SETTINGS
             imageLoaderLimit: 0,
             maxImageCacheCount: 200,
-            timeout: 30000,
-            useCanvas: true, // Use canvas element for drawing if available
-
-            //INTERFACE RESOURCE SETTINGS
-            prefixUrl: "/images/",
-            navImages: {
-                zoomIn: {
-                    REST: 'zoomin_rest.png',
-                    GROUP: 'zoomin_grouphover.png',
-                    HOVER: 'zoomin_hover.png',
-                    DOWN: 'zoomin_pressed.png'
-                },
-                zoomOut: {
-                    REST: 'zoomout_rest.png',
-                    GROUP: 'zoomout_grouphover.png',
-                    HOVER: 'zoomout_hover.png',
-                    DOWN: 'zoomout_pressed.png'
-                },
-                home: {
-                    REST: 'home_rest.png',
-                    GROUP: 'home_grouphover.png',
-                    HOVER: 'home_hover.png',
-                    DOWN: 'home_pressed.png'
-                },
-                fullpage: {
-                    REST: 'fullpage_rest.png',
-                    GROUP: 'fullpage_grouphover.png',
-                    HOVER: 'fullpage_hover.png',
-                    DOWN: 'fullpage_pressed.png'
-                },
-                rotateleft: {
-                    REST: 'rotateleft_rest.png',
-                    GROUP: 'rotateleft_grouphover.png',
-                    HOVER: 'rotateleft_hover.png',
-                    DOWN: 'rotateleft_pressed.png'
-                },
-                rotateright: {
-                    REST: 'rotateright_rest.png',
-                    GROUP: 'rotateright_grouphover.png',
-                    HOVER: 'rotateright_hover.png',
-                    DOWN: 'rotateright_pressed.png'
-                },
-                previous: {
-                    REST: 'previous_rest.png',
-                    GROUP: 'previous_grouphover.png',
-                    HOVER: 'previous_hover.png',
-                    DOWN: 'previous_pressed.png'
-                },
-                next: {
-                    REST: 'next_rest.png',
-                    GROUP: 'next_grouphover.png',
-                    HOVER: 'next_hover.png',
-                    DOWN: 'next_pressed.png'
-                }
-            },
+            timeout: 30000
         },
         delegate: function( object, method ) {
             return function(){
@@ -417,13 +354,6 @@ function OpenSeadragon( options ){
         now: function( ) {
             $.now = Date.now;
             return $.now();
-        },
-        setElementOpacity: function( element, opacity, usesAlpha ) {
-
-            element = $.getElement( element );
-
-            opacity = Math.round( opacity );
-            element.style.opacity = opacity < 1 ? opacity : "";
         },
         indexOf: function( array, searchElement, fromIndex ) {
             this.indexOf = function( array, searchElement, fromIndex ) {

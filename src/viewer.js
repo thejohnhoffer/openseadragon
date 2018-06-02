@@ -15,7 +15,6 @@ $.Viewer = function( options ) {
         options = {
             id: args[ 0 ],
             xmlPath: args.length > 1 ? args[ 1 ] : undefined,
-            prefixUrl: args.length > 2 ? args[ 2 ] : undefined
         };
     }
     //options.config and the general config argument are deprecated
@@ -60,13 +59,6 @@ $.Viewer = function( options ) {
         //simultaneous rendering of sets of tiles
         collectionViewport: null,
         collectionDrawer: null,
-
-        //UI image resources
-        //TODO: rename navImages to uiImages
-        navImages: null,
-
-        //TODO: this is defunct so safely remove it
-        profiler: null
 
     }, $.DEFAULT_SETTINGS, options );
     if ( typeof ( this.hash) === "undefined" ) {
@@ -227,7 +219,6 @@ $.Viewer = function( options ) {
             height: this.navigatorHeight,
             autoResize: this.navigatorAutoResize,
             autoFade: this.navigatorAutoFade,
-            prefixUrl: this.prefixUrl,
             viewer: this,
             navigatorRotate: this.navigatorRotate,
             crossOriginPolicy: this.crossOriginPolicy
@@ -612,18 +603,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             options.replaceItem = _this.world.getItemAt(options.index);
         }
 
-        if (options.placeholderFillStyle === undefined) {
-            options.placeholderFillStyle = this.placeholderFillStyle;
-        }
-        if (options.opacity === undefined) {
-            options.opacity = this.opacity;
-        }
-        if (options.preload === undefined) {
-            options.preload = this.preload;
-        }
-        if (options.compositeOperation === undefined) {
-            options.compositeOperation = this.compositeOperation;
-        }
         if (options.crossOriginPolicy === undefined) {
             options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
         }
@@ -714,11 +693,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     height: queueItem.options.height,
                     fitBounds: queueItem.options.fitBounds,
                     clip: queueItem.options.clip,
-                    placeholderFillStyle: queueItem.options.placeholderFillStyle,
-                    opacity: queueItem.options.opacity,
-                    preload: queueItem.options.preload,
                     degrees: queueItem.options.degrees,
-                    compositeOperation: queueItem.options.compositeOperation,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
@@ -911,7 +886,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                     imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 ajaxHeaders: viewer.ajaxHeaders,
-                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -927,9 +901,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
-            }
-            if (tileSource.useCanvas === undefined) {
-                tileSource.useCanvas = viewer.useCanvas;
             }
             if ( $.isFunction( tileSource.getTileUrl ) ) {
                 //Custom tile source

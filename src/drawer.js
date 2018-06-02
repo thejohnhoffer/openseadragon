@@ -17,13 +17,10 @@ $.Drawer = function( options ) {
 
     this.viewer = options.viewer;
     this.viewport = options.viewport;
-    this.useCanvas = this.viewer ? this.viewer.useCanvas : true;
 
     this.container = $.getElement( options.element );
 
-    this.canvas = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
 
-    this.context = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
     this.sketchCanvas = null;
     this.sketchContext = null;
     this.element = this.container;
@@ -32,40 +29,18 @@ $.Drawer = function( options ) {
     // This issue only affects our canvas renderer, but we do it always for consistency.
     this.container.dir = 'ltr';
 
-    // check canvas available width and height, set canvas width and height such that the canvas backing store is set to the proper pixel density
-    if (this.useCanvas) {
-        var viewportSize = this._calculateCanvasSize();
-        this.canvas.width = viewportSize.x;
-        this.canvas.height = viewportSize.y;
-    }
+    var viewportSize = this._calculateCanvasSize();
+    this.canvas.width = viewportSize.x;
+    this.canvas.height = viewportSize.y;
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     this.canvas.style.position = "absolute";
-    $.setElementOpacity( this.canvas, this.opacity, true );
 
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
 };
 $.Drawer.prototype = {
-    setOpacity: function( opacity ) {
-        var world = this.viewer.world;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            world.getItemAt( i ).setOpacity( opacity );
-        }
-        return this;
-    },
-    getOpacity: function() {
-        var world = this.viewer.world;
-        var maxOpacity = 0;
-        for (var i = 0; i < world.getItemCount(); i++) {
-            var opacity = world.getItemAt( i ).getOpacity();
-            if ( opacity > maxOpacity ) {
-                maxOpacity = opacity;
-            }
-        }
-        return maxOpacity;
-    },
     // deprecated
     needsUpdate: function() {
         return this.viewer.world.needsDraw();
@@ -86,7 +61,7 @@ $.Drawer.prototype = {
         return this;
     },
     canRotate: function() {
-        return this.useCanvas;
+        return true;
     },
     destroy: function() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
@@ -97,25 +72,20 @@ $.Drawer.prototype = {
     },
     clear: function() {
         this.canvas.innerHTML = "";
-        if ( this.useCanvas ) {
-            var viewportSize = this._calculateCanvasSize();
-            if( this.canvas.width != viewportSize.x ||
-                this.canvas.height != viewportSize.y ) {
-                this.canvas.width = viewportSize.x;
-                this.canvas.height = viewportSize.y;
-                if ( this.sketchCanvas !== null ) {
-                    var sketchCanvasSize = this._calculateSketchCanvasSize();
-                    this.sketchCanvas.width = sketchCanvasSize.x;
-                    this.sketchCanvas.height = sketchCanvasSize.y;
-                }
+        var viewportSize = this._calculateCanvasSize();
+        if( this.canvas.width != viewportSize.x ||
+            this.canvas.height != viewportSize.y ) {
+            this.canvas.width = viewportSize.x;
+            this.canvas.height = viewportSize.y;
+            if ( this.sketchCanvas !== null ) {
+                var sketchCanvasSize = this._calculateSketchCanvasSize();
+                this.sketchCanvas.width = sketchCanvasSize.x;
+                this.sketchCanvas.height = sketchCanvasSize.y;
             }
-            this._clear();
         }
+        this._clear();
     },
     _clear: function (useSketch, bounds) {
-        if (!this.useCanvas) {
-            return;
-        }
         var context = this._getContext(useSketch);
         if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -137,13 +107,9 @@ $.Drawer.prototype = {
     },
     drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
 
-        if (this.useCanvas) {
-            var context = this._getContext(useSketch);
-            scale = scale || 1;
-            tile.drawCanvas(context, drawingHandler, scale, translate);
-        } else {
-            tile.drawHTML( this.canvas );
-        }
+        var context = this._getContext(useSketch);
+        scale = scale || 1;
+        tile.drawCanvas(context, drawingHandler, scale, translate);
     },
     _getContext: function( useSketch ) {
         var context = this.context;
@@ -177,23 +143,14 @@ $.Drawer.prototype = {
     },
     // private
     saveContext: function( useSketch ) {
-        if (!this.useCanvas) {
-            return;
-        }
         this._getContext( useSketch ).save();
     },
     // private
     restoreContext: function( useSketch ) {
-        if (!this.useCanvas) {
-            return;
-        }
         this._getContext( useSketch ).restore();
     },
     // private
     setClip: function(rect, useSketch) {
-        if (!this.useCanvas) {
-            return;
-        }
         var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
@@ -201,37 +158,16 @@ $.Drawer.prototype = {
     },
     // private
     drawRectangle: function(rect, fillStyle, useSketch) {
-        if (!this.useCanvas) {
-            return;
-        }
         var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
         context.fillRect(rect.x, rect.y, rect.width, rect.height);
         context.restore();
     },
-    blendSketch: function(opacity, scale, translate, compositeOperation) {
-        var options = opacity;
-        if (!$.isPlainObject(options)) {
-            options = {
-                opacity: opacity,
-                scale: scale,
-                translate: translate,
-                compositeOperation: compositeOperation
-            };
-        }
-        if (!this.useCanvas || !this.sketchCanvas) {
-            return;
-        }
-        opacity = options.opacity;
-        compositeOperation = options.compositeOperation;
+    blendSketch: function(options) {
         var bounds = options.bounds;
 
         this.context.save();
-        this.context.globalAlpha = opacity;
-        if (compositeOperation) {
-            this.context.globalCompositeOperation = compositeOperation;
-        }
         if (bounds) {
             // Internet Explorer, Microsoft Edge, and Safari have problems
             // when you call context.drawImage with negative x or y
@@ -262,8 +198,8 @@ $.Drawer.prototype = {
                 bounds.height
             );
         } else {
-            scale = options.scale || 1;
-            translate = options.translate;
+            var scale = options.scale || 1;
+            var translate = options.translate;
             var position = translate instanceof $.Point ?
                 translate : new $.Point(0, 0);
 
