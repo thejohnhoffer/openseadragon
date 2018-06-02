@@ -181,7 +181,6 @@ function OpenSeadragon( options ){
                 flickEnabled: false,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
-                pinchRotate: false
             },
             gestureSettingsTouch: {
                 scrollToZoom: false,
@@ -192,7 +191,6 @@ function OpenSeadragon( options ){
                 flickEnabled: true,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
-                pinchRotate: false
             },
             gestureSettingsPen: {
                 scrollToZoom: false,
@@ -203,7 +201,6 @@ function OpenSeadragon( options ){
                 flickEnabled: false,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
-                pinchRotate: false
             },
             gestureSettingsUnknown: {
                 scrollToZoom: false,
@@ -214,7 +211,6 @@ function OpenSeadragon( options ){
                 flickEnabled: true,
                 flickMinSpeed: 120,
                 flickMomentum: 0.25,
-                pinchRotate: false
             },
             zoomPerClick: 2,
             zoomPerScroll: 1.2,
@@ -247,10 +243,6 @@ function OpenSeadragon( options ){
             navigatorWidth: null,
             navigatorAutoResize: true,
             navigatorAutoFade: true,
-            navigatorRotate: true,
-
-            // INITIAL ROTATION
-            degrees: 0,
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows: 3, //or columns depending on layout

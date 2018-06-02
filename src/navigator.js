@@ -80,20 +80,6 @@ $.Navigator = function( options ){
     this.displayRegionContainer.appendChild(this.displayRegion);
     this.element.getElementsByTagName('div')[0].appendChild(this.displayRegionContainer);
 
-    function rotate(degrees) {
-        _setTransformRotate(_this.displayRegionContainer, degrees);
-        _setTransformRotate(_this.displayRegion, -degrees);
-        _this.viewport.setRotation(degrees);
-    }
-    if (options.navigatorRotate) {
-        var degrees = options.viewer.viewport ?
-            options.viewer.viewport.getRotation() :
-            options.viewer.degrees || 0;
-        rotate(degrees);
-        options.viewer.addHandler("rotate", function (args) {
-            rotate(args.degrees);
-        });
-    }
     // Remove the base class' (Viewer's) innerTracker and replace it with our own
     this.innerTracker.destroy();
     this.innerTracker = new $.MouseTracker({
@@ -147,9 +133,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
             bottomright;
 
         if (viewport && this.viewport) {
-            bounds = viewport.getBoundsNoRotate(true);
-            topleft = this.viewport.pixelFromPointNoRotate(bounds.getTopLeft(), false);
-            bottomright = this.viewport.pixelFromPointNoRotate(bounds.getBottomRight(), false)
+            bounds = viewport.getBounds(true);
+            topleft = this.viewport.pixelFromPoint(bounds.getTopLeft(), false);
+            bottomright = this.viewport.pixelFromPoint(bounds.getBottomRight(), false)
                 .minus( this.totalBorderWidths );
 
             //update style for navigator-box
@@ -202,7 +188,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, {
     },
     // private
     _matchBounds: function(myItem, theirItem, immediately) {
-        var bounds = theirItem.getBoundsNoRotate();
+        var bounds = theirItem.getBounds();
         myItem.setPosition(bounds.getTopLeft(), immediately);
         myItem.setWidth(bounds.width, immediately);
         myItem.setRotation(theirItem.getRotation(), immediately);
@@ -249,12 +235,5 @@ function onCanvasScroll( event ) {
     //dont scroll the page up and down if the user is scrolling
     //in the navigator
     return false;
-}
-function _setTransformRotate (element, degrees) {
-    element.style.webkitTransform = "rotate(" + degrees + "deg)";
-    element.style.mozTransform = "rotate(" + degrees + "deg)";
-    element.style.msTransform = "rotate(" + degrees + "deg)";
-    element.style.oTransform = "rotate(" + degrees + "deg)";
-    element.style.transform = "rotate(" + degrees + "deg)";
 }
 }( OpenSeadragon ));

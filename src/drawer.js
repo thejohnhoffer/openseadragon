@@ -60,9 +60,6 @@ $.Drawer.prototype = {
         this.viewer.world.draw();
         return this;
     },
-    canRotate: function() {
-        return true;
-    },
     destroy: function() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.width = 1;
@@ -95,8 +92,8 @@ $.Drawer.prototype = {
         }
     },
     viewportToDrawerRectangle: function(rectangle) {
-        var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
-        var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
+        var topLeft = this.viewport.pixelFromPoint(rectangle.getTopLeft(), true);
+        var size = this.viewport.deltaPixelsFromPoints(rectangle.getSize(), true);
 
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
@@ -120,22 +117,6 @@ $.Drawer.prototype = {
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
-
-                // If the viewport is not currently rotated, the sketchCanvas
-                // will have the same size as the main canvas. However, if
-                // the viewport get rotated later on, we will need to resize it.
-                if (this.viewport.getRotation() === 0) {
-                    var self = this;
-                    this.viewer.addHandler('rotate', function resizeSketchCanvas() {
-                        if (self.viewport.getRotation() === 0) {
-                            return;
-                        }
-                        self.viewer.removeHandler('rotate', resizeSketchCanvas);
-                        var sketchCanvasSize = self._calculateSketchCanvasSize();
-                        self.sketchCanvas.width = sketchCanvasSize.x;
-                        self.sketchCanvas.height = sketchCanvasSize.y;
-                    });
-                }
             }
             context = this.sketchContext;
         }
@@ -242,7 +223,6 @@ $.Drawer.prototype = {
         context.save();
 
         context.translate(point.x, point.y);
-        context.rotate(Math.PI / 180 * options.degrees);
         context.translate(-point.x, -point.y);
     },
     // private
@@ -261,19 +241,7 @@ $.Drawer.prototype = {
     },
     // private
     _calculateSketchCanvasSize: function() {
-        var canvasSize = this._calculateCanvasSize();
-        if (this.viewport.getRotation() === 0) {
-            return canvasSize;
-        }
-        // If the viewport is rotated, we need a larger sketch canvas in order
-        // to support edge smoothing.
-        var sketchCanvasSize = Math.ceil(Math.sqrt(
-            canvasSize.x * canvasSize.x +
-            canvasSize.y * canvasSize.y));
-        return {
-            x: sketchCanvasSize,
-            y: sketchCanvasSize
-        };
+        return this._calculateCanvasSize();
     }
 };
 }( OpenSeadragon ));

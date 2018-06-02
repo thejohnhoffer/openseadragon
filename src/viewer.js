@@ -183,8 +183,6 @@ $.Viewer = function( options ) {
         minZoomLevel: this.minZoomLevel,
         maxZoomLevel: this.maxZoomLevel,
         viewer: this,
-        degrees: this.degrees,
-        navigatorRotate: this.navigatorRotate,
         homeFillsViewer: this.homeFillsViewer,
         margins: this.viewportMargins
     });
@@ -220,7 +218,6 @@ $.Viewer = function( options ) {
             autoResize: this.navigatorAutoResize,
             autoFade: this.navigatorAutoFade,
             viewer: this,
-            navigatorRotate: this.navigatorRotate,
             crossOriginPolicy: this.crossOriginPolicy
         });
     }
@@ -693,7 +690,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     height: queueItem.options.height,
                     fitBounds: queueItem.options.fitBounds,
                     clip: queueItem.options.clip,
-                    degrees: queueItem.options.degrees,
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,

@@ -47,7 +47,6 @@ $.Viewport = function( options ) {
         defaultZoomLevel: $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel: $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel: $.DEFAULT_SETTINGS.maxZoomLevel,
-        degrees: $.DEFAULT_SETTINGS.degrees,
         homeFillsViewer: $.DEFAULT_SETTINGS.homeFillsViewer
 
     }, options );
@@ -96,19 +95,19 @@ $.Viewport.prototype = {
     // @private
     _setContentBounds: function(bounds, contentFactor) {
 
-        this._contentBoundsNoRotate = bounds.clone();
-        this._contentSizeNoRotate = this._contentBoundsNoRotate.getSize().times(
+        this._contentBounds = bounds.clone();
+        this._contentSize = this._contentBounds.getSize().times(
             contentFactor);
 
-        this._contentBounds = bounds.rotate(this.degrees).getBoundingBox();
+        this._contentBounds = bounds.getBoundingBox();
         this._contentSize = this._contentBounds.getSize().times(contentFactor);
         this._contentAspectRatio = this._contentSize.x / this._contentSize.y;
 
         if (this.viewer) {
             this.viewer.raiseEvent('reset-size', {
-                contentSize: this._contentSizeNoRotate.clone(),
+                contentSize: this._contentSize.clone(),
                 contentFactor: contentFactor,
-                homeBounds: this._contentBoundsNoRotate.clone(),
+                homeBounds: this._contentBounds.clone(),
                 contentBounds: this._contentBounds.clone()
             });
         }
@@ -127,9 +126,9 @@ $.Viewport.prototype = {
         return output / this._contentBounds.width;
     },
     getHomeBounds: function() {
-        return this.getHomeBoundsNoRotate().rotate(-this.getRotation());
+        return this.getHomeBounds();
     },
-    getHomeBoundsNoRotate: function() {
+    getHomeBounds: function() {
         var center = this._contentBounds.getCenter();
         var width = 1.0 / this.getHomeZoom();
         var height = width / this.getAspectRatio();
@@ -191,9 +190,6 @@ $.Viewport.prototype = {
         }
     },
     getBounds: function(current) {
-        return this.getBoundsNoRotate(current).rotate(-this.getRotation());
-    },
-    getBoundsNoRotate: function(current) {
         var center = this.getCenter(current);
         var width = 1.0 / this.getZoom(current);
         var height = width / this.getAspectRatio();
@@ -206,11 +202,7 @@ $.Viewport.prototype = {
         );
     },
     getBoundsWithMargins: function(current) {
-        return this.getBoundsNoRotateWithMargins(current).rotate(
-            -this.getRotation(), this.getCenter(current));
-    },
-    getBoundsNoRotateWithMargins: function(current) {
-        var bounds = this.getBoundsNoRotate(current);
+        var bounds = this.getBounds(current);
         var factor = this._containerInnerSize.x * this.getZoom(current);
         bounds.x -= this._margins.left / factor;
         bounds.y -= this._margins.top / factor;
@@ -284,11 +276,11 @@ $.Viewport.prototype = {
         } else {
             var horizontalThreshold = this.visibilityRatio * newBounds.width;
             var boundsRight = newBounds.x + newBounds.width;
-            var contentRight = this._contentBoundsNoRotate.x + this._contentBoundsNoRotate.width;
-            var leftDx = this._contentBoundsNoRotate.x - boundsRight + horizontalThreshold;
+            var contentRight = this._contentBounds.x + this._contentBounds.width;
+            var leftDx = this._contentBounds.x - boundsRight + horizontalThreshold;
             var rightDx = contentRight - newBounds.x - horizontalThreshold;
 
-            if (horizontalThreshold > this._contentBoundsNoRotate.width) {
+            if (horizontalThreshold > this._contentBounds.width) {
                 newBounds.x += (leftDx + rightDx) / 2;
             } else if (rightDx < 0) {
                 newBounds.x += rightDx;
@@ -301,11 +293,11 @@ $.Viewport.prototype = {
         } else {
             var verticalThreshold = this.visibilityRatio * newBounds.height;
             var boundsBottom = newBounds.y + newBounds.height;
-            var contentBottom = this._contentBoundsNoRotate.y + this._contentBoundsNoRotate.height;
-            var topDy = this._contentBoundsNoRotate.y - boundsBottom + verticalThreshold;
+            var contentBottom = this._contentBounds.y + this._contentBounds.height;
+            var topDy = this._contentBounds.y - boundsBottom + verticalThreshold;
             var bottomDy = contentBottom - newBounds.y - verticalThreshold;
 
-            if (verticalThreshold > this._contentBoundsNoRotate.height) {
+            if (verticalThreshold > this._contentBounds.height) {
                 newBounds.y += (topDy + bottomDy) / 2;
             } else if (bottomDy < 0) {
                 newBounds.y += bottomDy;
@@ -329,16 +321,14 @@ $.Viewport.prototype = {
         if (actualZoom !== constrainedZoom) {
             this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
         }
-        var bounds = this.getBoundsNoRotate();
+        var bounds = this.getBounds();
         var constrainedBounds = this._applyBoundaryConstraints(bounds);
         this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
             immediately) {
-            this.fitBounds(
-                constrainedBounds.rotate(-this.getRotation()),
-                immediately);
+            this.fitBounds(constrainedBounds, immediately);
         }
         return this;
     },
@@ -358,8 +348,7 @@ $.Viewport.prototype = {
             bounds.x,
             bounds.y,
             bounds.width,
-            bounds.height,
-            bounds.degrees + this.getRotation())
+            bounds.height)
             .getBoundingBox();
 
         if (newBounds.getAspectRatio() >= aspect) {
@@ -401,7 +390,6 @@ $.Viewport.prototype = {
             this.zoomTo(newZoom, true);
             return this.panTo(center, immediately);
         }
-        newBounds = newBounds.rotate(-this.getRotation());
         var referencePoint = newBounds.getTopLeft().times(newZoom)
             .minus(oldBounds.getTopLeft().times(oldZoom))
             .divide(newZoom - oldZoom);
@@ -498,23 +486,8 @@ $.Viewport.prototype = {
         }
         return this;
     },
-    setRotation: function(degrees) {
-        if (!this.viewer || !this.viewer.drawer.canRotate()) {
-            return this;
-        }
-        this.degrees = $.positiveModulo(degrees, 360);
-        this._setContentBounds(
-            this.viewer.world.getHomeBounds(),
-            this.viewer.world.getContentFactor());
-        this.viewer.forceRedraw();
-        this.viewer.raiseEvent('rotate', {"degrees": degrees});
-        return this;
-    },
-    getRotation: function() {
-        return this.degrees;
-    },
     resize: function( newContainerSize, maintain ) {
-        var oldBounds = this.getBoundsNoRotate(),
+        var oldBounds = this.getBounds(),
             newBounds = oldBounds,
             widthDeltaFactor;
 
@@ -582,34 +555,21 @@ $.Viewport.prototype = {
             zoomSpringHandler();
         }
     },
-    deltaPixelsFromPointsNoRotate: function(deltaPoints, current) {
+    deltaPixelsFromPoints: function(deltaPoints, current) {
         return deltaPoints.times(
             this._containerInnerSize.x * this.getZoom(current)
         );
     },
-    deltaPixelsFromPoints: function(deltaPoints, current) {
-        return this.deltaPixelsFromPointsNoRotate(
-            deltaPoints.rotate(this.getRotation()),
-            current);
-    },
-    deltaPointsFromPixelsNoRotate: function(deltaPixels, current) {
+    deltaPointsFromPixels: function(deltaPixels, current) {
         return deltaPixels.divide(
             this._containerInnerSize.x * this.getZoom(current)
         );
     },
-    deltaPointsFromPixels: function(deltaPixels, current) {
-        return this.deltaPointsFromPixelsNoRotate(deltaPixels, current)
-            .rotate(-this.getRotation());
-    },
-    pixelFromPointNoRotate: function(point, current) {
-        return this._pixelFromPointNoRotate(
-            point, this.getBoundsNoRotate(current));
-    },
     pixelFromPoint: function(point, current) {
-        return this._pixelFromPoint(point, this.getBoundsNoRotate(current));
+        return this._pixelFromPoint(point, this.getBounds(current));
     },
     // private
-    _pixelFromPointNoRotate: function(point, bounds) {
+    _pixelFromPoint: function(point, bounds) {
         return point.minus(
             bounds.getTopLeft()
         ).times(
@@ -618,14 +578,8 @@ $.Viewport.prototype = {
             new $.Point(this._margins.left, this._margins.top)
         );
     },
-    // private
-    _pixelFromPoint: function(point, bounds) {
-        return this._pixelFromPointNoRotate(
-            point.rotate(this.getRotation(), this.getCenter(true)),
-            bounds);
-    },
-    pointFromPixelNoRotate: function(pixel, current) {
-        var bounds = this.getBoundsNoRotate(current);
+    pointFromPixel: function(pixel, current) {
+        var bounds = this.getBounds(current);
         return pixel.minus(
             new $.Point(this._margins.left, this._margins.top)
         ).divide(
@@ -634,18 +588,12 @@ $.Viewport.prototype = {
             bounds.getTopLeft()
         );
     },
-    pointFromPixel: function(pixel, current) {
-        return this.pointFromPixelNoRotate(pixel, current).rotate(
-            -this.getRotation(),
-            this.getCenter(true)
-        );
-    },
     // private
     _viewportToImageDelta: function( viewerX, viewerY ) {
-        var scale = this._contentBoundsNoRotate.width;
+        var scale = this._contentBounds.width;
         return new $.Point(
-            viewerX * this._contentSizeNoRotate.x / scale,
-            viewerY * this._contentSizeNoRotate.x / scale);
+            viewerX * this._contentSize.x / scale,
+            viewerY * this._contentSize.x / scale);
     },
     viewportToImageCoordinates: function(viewerX, viewerY) {
         if (viewerX instanceof $.Point) {
@@ -657,15 +605,15 @@ $.Viewport.prototype = {
             return item.viewportToImageCoordinates(viewerX, viewerY, true);
         }
         return this._viewportToImageDelta(
-            viewerX - this._contentBoundsNoRotate.x,
-            viewerY - this._contentBoundsNoRotate.y);
+            viewerX - this._contentBounds.x,
+            viewerY - this._contentBounds.y);
     },
     // private
     _imageToViewportDelta: function( imageX, imageY ) {
-        var scale = this._contentBoundsNoRotate.width;
+        var scale = this._contentBounds.width;
         return new $.Point(
-            imageX / this._contentSizeNoRotate.x * scale,
-            imageY / this._contentSizeNoRotate.x * scale);
+            imageX / this._contentSize.x * scale,
+            imageY / this._contentSize.x * scale);
     },
     imageToViewportCoordinates: function(imageX, imageY) {
         if (imageX instanceof $.Point) {
@@ -677,8 +625,8 @@ $.Viewport.prototype = {
             return item.imageToViewportCoordinates(imageX, imageY, true);
         }
         var point = this._imageToViewportDelta(imageX, imageY);
-        point.x += this._contentBoundsNoRotate.x;
-        point.y += this._contentBoundsNoRotate.y;
+        point.x += this._contentBounds.x;
+        point.y += this._contentBounds.y;
         return point;
     },
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
@@ -699,7 +647,6 @@ $.Viewport.prototype = {
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees
         );
     },
     viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
@@ -720,7 +667,6 @@ $.Viewport.prototype = {
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees
         );
     },
     viewerElementToImageCoordinates: function( pixel ) {
@@ -776,9 +722,9 @@ $.Viewport.prototype = {
             var item = this.viewer.world.getItemAt(0);
             return item.viewportToImageZoom(viewportZoom);
         }
-        var imageWidth = this._contentSizeNoRotate.x;
+        var imageWidth = this._contentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBoundsNoRotate.width;
+        var scale = this._contentBounds.width;
         var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
@@ -787,9 +733,9 @@ $.Viewport.prototype = {
             var item = this.viewer.world.getItemAt(0);
             return item.imageToViewportZoom(imageZoom);
         }
-        var imageWidth = this._contentSizeNoRotate.x;
+        var imageWidth = this._contentSize.x;
         var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBoundsNoRotate.width;
+        var scale = this._contentBounds.width;
         var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     }

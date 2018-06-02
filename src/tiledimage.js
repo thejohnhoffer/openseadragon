@@ -43,8 +43,6 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
-    var degrees = options.degrees || 0;
-    delete options.degrees;
 
     $.extend( true, this, {
         //internal state properties
@@ -91,11 +89,6 @@ $.TiledImage = function( options ) {
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
     });
-    this._degreesSpring = new $.Spring({
-        initial: degrees,
-        springStiffness: this.springStiffness,
-        animationTime: this.animationTime
-    });
     this._updateForScale();
 
     // We need a callback to give image manipulation a chance to happen
@@ -131,9 +124,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         var xUpdated = this._xSpring.update();
         var yUpdated = this._ySpring.update();
         var scaleUpdated = this._scaleSpring.update();
-        var degreesUpdated = this._degreesSpring.update();
 
-        if (xUpdated || yUpdated || scaleUpdated || degreesUpdated) {
+        if (xUpdated || yUpdated || scaleUpdated) {
             this._updateForScale();
             this._needsDraw = true;
             return true;
@@ -149,10 +141,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         this.reset();
     },
     getBounds: function(current) {
-        return this.getBoundsNoRotate(current)
-            .rotate(this.getRotation(current), this._getRotationPoint(current));
-    },
-    getBoundsNoRotate: function(current) {
         return current ?
             new $.Rect(
                 this._xSpring.current.value,
@@ -170,7 +158,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         return this.getBounds();
     },
     getClippedBounds: function(current) {
-        var bounds = this.getBoundsNoRotate(current);
+        var bounds = this.getBounds(current);
         if (this._clip) {
             var worldWidth = current ?
                 this._worldWidthCurrent : this._worldWidthTarget;
@@ -182,7 +170,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
                 clip.width,
                 clip.height);
         }
-        return bounds.rotate(this.getRotation(current), this._getRotationPoint(current));
+        return bounds;
     },
     getContentSize: function() {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
@@ -202,7 +190,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         } else {
             point = new $.Point(viewerX, viewerY);
         }
-        point = point.rotate(-this.getRotation(current), this._getRotationPoint(current));
         return current ?
             this._viewportToImageDelta(
                 point.x - this._xSpring.current.value,
@@ -232,7 +219,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             point.x += this._xSpring.target.value;
             point.y += this._ySpring.target.value;
         }
-        return point.rotate(this.getRotation(current), this._getRotationPoint(current));
+        return point;
     },
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight, current) {
         var rect = imageX;
@@ -250,7 +237,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees + this.getRotation(current)
         );
     },
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
@@ -269,7 +255,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             coordA.y,
             coordB.x,
             coordB.y,
-            rect.degrees - this.getRotation(current)
         );
     },
     viewerElementToImageCoordinates: function( pixel ) {
@@ -295,13 +280,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
     // coordinates (x in [0, 1] and y in [0, aspectRatio])
     _viewportToTiledImageRectangle: function(rect) {
         var scale = this._scaleSpring.current.value;
-        rect = rect.rotate(-this.getRotation(true), this._getRotationPoint(true));
         return new $.Rect(
             (rect.x - this._xSpring.current.value) / scale,
             (rect.y - this._ySpring.current.value) / scale,
             rect.width / scale,
-            rect.height / scale,
-            rect.degrees);
+            rect.height / scale);
     },
     viewportToImageZoom: function( viewportZoom ) {
         var ratio = this._scaleSpring.current.value *
@@ -396,27 +379,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
 
         this.raiseEvent('clip-change');
     },
-    getRotation: function(current) {
-        return current ?
-            this._degreesSpring.current.value :
-            this._degreesSpring.target.value;
-    },
-    setRotation: function(degrees, immediately) {
-        if (this._degreesSpring.target.value === degrees &&
-            this._degreesSpring.isAtTargetValue()) {
-            return;
-        }
-        if (immediately) {
-            this._degreesSpring.resetTo(degrees);
-        } else {
-            this._degreesSpring.springTo(degrees);
-        }
-        this._needsDraw = true;
-        this._raiseBoundsChange();
-    },
-    _getRotationPoint: function(current) {
-        return this.getBoundsNoRotate(current).getCenter();
-    },
     // private
     _setScale: function(scale, immediately) {
         var sameTarget = (this._scaleSpring.target.value === scale);
@@ -460,7 +422,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             this.source.minLevel,
             Math.floor(Math.log(this.minZoomImageRatio) / Math.log(2))
         );
-        var currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+        var currentZeroRatio = this.viewport.deltaPixelsFromPoints(
             this.source.getPixelRatio(0), true).x *
             this._scaleSpring.current.value;
         var highestLevel = Math.min(
@@ -511,7 +473,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             var drawLevel = false;
 
             //Avoid calculations for draw if we have already drawn this
-            var currentRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
+            var currentRenderPixelRatio = viewport.deltaPixelsFromPoints(
                 this.source.getPixelRatio(level),
                 true
             ).x * this._scaleSpring.current.value;
@@ -524,12 +486,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
                 continue;
             }
             //Perform calculations for draw if we haven't drawn this
-            var targetRenderPixelRatio = viewport.deltaPixelsFromPointsNoRotate(
+            var targetRenderPixelRatio = viewport.deltaPixelsFromPoints(
                 this.source.getPixelRatio(level),
                 false
             ).x * this._scaleSpring.current.value;
 
-            var targetZeroRatio = viewport.deltaPixelsFromPointsNoRotate(
+            var targetZeroRatio = viewport.deltaPixelsFromPoints(
                 this.source.getPixelRatio(
                     Math.max(
                         this.source.getClosestLevel(),
@@ -925,10 +887,10 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
     boundsSize.x *= tiledImage._scaleSpring.current.value;
     boundsSize.y *= tiledImage._scaleSpring.current.value;
 
-    var positionC = viewport.pixelFromPointNoRotate(boundsTL, true),
-        positionT = viewport.pixelFromPointNoRotate(boundsTL, false),
-        sizeC = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
-        sizeT = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
+    var positionC = viewport.pixelFromPoint(boundsTL, true),
+        positionT = viewport.pixelFromPoint(boundsTL, false),
+        sizeC = viewport.deltaPixelsFromPoints(boundsSize, true),
+        sizeT = viewport.deltaPixelsFromPoints(boundsSize, false),
         tileCenter = positionT.plus( sizeT.divide( 2 ) ),
         tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
@@ -1064,30 +1026,11 @@ function drawTiles( tiledImage, lastDrawn ) {
         }
         tiledImage._drawer._clear(true, bounds);
     }
-    // When scaling, we must rotate only when blending the sketch canvas to
-    // avoid interpolation
-    if (!sketchScale) {
-        if (tiledImage.viewport.degrees !== 0) {
-            tiledImage._drawer._offsetForRotation({
-                degrees: tiledImage.viewport.degrees,
-                useSketch: useSketch
-            });
-        }
-        if (tiledImage.getRotation(true) % 360 !== 0) {
-            tiledImage._drawer._offsetForRotation({
-                degrees: tiledImage.getRotation(true),
-                point: tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage._getRotationPoint(true), true),
-                useSketch: useSketch
-            });
-        }
-    }
     var usedClip = false;
     if ( tiledImage._clip ) {
         tiledImage._drawer.saveContext(useSketch);
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
-        box = box.rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
         if (sketchScale) {
             clipRect = clipRect.times(sketchScale);
@@ -1114,44 +1057,12 @@ function drawTiles( tiledImage, lastDrawn ) {
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );
     }
-    if (!sketchScale) {
-        if (tiledImage.getRotation(true) % 360 !== 0) {
-            tiledImage._drawer._restoreRotationChanges(useSketch);
-        }
-        if (tiledImage.viewport.degrees !== 0) {
-            tiledImage._drawer._restoreRotationChanges(useSketch);
-        }
-    }
     if (useSketch) {
-        if (sketchScale) {
-            if (tiledImage.viewport.degrees !== 0) {
-                tiledImage._drawer._offsetForRotation({
-                    degrees: tiledImage.viewport.degrees,
-                    useSketch: false
-                });
-            }
-            if (tiledImage.getRotation(true) % 360 !== 0) {
-                tiledImage._drawer._offsetForRotation({
-                    degrees: tiledImage.getRotation(true),
-                    point: tiledImage.viewport.pixelFromPointNoRotate(
-                        tiledImage._getRotationPoint(true), true),
-                    useSketch: false
-                });
-            }
-        }
         tiledImage._drawer.blendSketch({
             scale: sketchScale,
             translate: sketchTranslate,
             bounds: bounds
         });
-        if (sketchScale) {
-            if (tiledImage.getRotation(true) % 360 !== 0) {
-                tiledImage._drawer._restoreRotationChanges(false);
-            }
-            if (tiledImage.viewport.degrees !== 0) {
-                tiledImage._drawer._restoreRotationChanges(false);
-            }
-        }
     }
 }
 }( OpenSeadragon ));

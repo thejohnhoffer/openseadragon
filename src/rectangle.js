@@ -1,7 +1,7 @@
 
 
 (function($) {
-$.Rect = function(x, y, width, height, degrees) {
+$.Rect = function(x, y, width, height) {
     this.x = typeof (x) === "number" ? x : 0;
 
     this.y = typeof (y) === "number" ? y : 0;
@@ -10,33 +10,6 @@ $.Rect = function(x, y, width, height, degrees) {
 
     this.height = typeof (height) === "number" ? height : 0;
 
-    this.degrees = typeof (degrees) === "number" ? degrees : 0;
-
-    // Normalizes the rectangle.
-    this.degrees = $.positiveModulo(this.degrees, 360);
-    var newTopLeft, newWidth;
-    if (this.degrees >= 270) {
-        newTopLeft = this.getTopRight();
-        this.x = newTopLeft.x;
-        this.y = newTopLeft.y;
-        newWidth = this.height;
-        this.height = this.width;
-        this.width = newWidth;
-        this.degrees -= 270;
-    } else if (this.degrees >= 180) {
-        newTopLeft = this.getBottomRight();
-        this.x = newTopLeft.x;
-        this.y = newTopLeft.y;
-        this.degrees -= 180;
-    } else if (this.degrees >= 90) {
-        newTopLeft = this.getBottomLeft();
-        this.x = newTopLeft.x;
-        this.y = newTopLeft.y;
-        newWidth = this.height;
-        this.height = this.width;
-        this.width = newWidth;
-        this.degrees -= 90;
-    }
 };
 $.Rect.fromSummits = function(topLeft, topRight, bottomLeft) {
     var width = topLeft.distanceTo(topRight);
@@ -61,8 +34,7 @@ $.Rect.prototype = {
             this.x,
             this.y,
             this.width,
-            this.height,
-            this.degrees);
+            this.height);
     },
     getAspectRatio: function() {
         return this.width / this.height;
@@ -74,22 +46,19 @@ $.Rect.prototype = {
         );
     },
     getBottomRight: function() {
-        return new $.Point(this.x + this.width, this.y + this.height)
-            .rotate(this.degrees, this.getTopLeft());
+        return new $.Point(this.x + this.width, this.y + this.height);
     },
     getTopRight: function() {
-        return new $.Point(this.x + this.width, this.y)
-            .rotate(this.degrees, this.getTopLeft());
+        return new $.Point(this.x + this.width, this.y);
     },
     getBottomLeft: function() {
-        return new $.Point(this.x, this.y + this.height)
-            .rotate(this.degrees, this.getTopLeft());
+        return new $.Point(this.x, this.y + this.height);
     },
     getCenter: function() {
         return new $.Point(
             this.x + this.width / 2.0,
             this.y + this.height / 2.0
-        ).rotate(this.degrees, this.getTopLeft());
+        );
     },
     getSize: function() {
         return new $.Point(this.width, this.height);
@@ -99,24 +68,21 @@ $.Rect.prototype = {
             this.x === other.x &&
             this.y === other.y &&
             this.width === other.width &&
-            this.height === other.height &&
-            this.degrees === other.degrees;
+            this.height === other.height;
     },
     times: function(factor) {
         return new $.Rect(
             this.x * factor,
             this.y * factor,
             this.width * factor,
-            this.height * factor,
-            this.degrees);
+            this.height * factor);
     },
     translate: function(delta) {
         return new $.Rect(
             this.x + delta.x,
             this.y + delta.y,
             this.width,
-            this.height,
-            this.degrees);
+            this.height);
     },
     union: function(rect) {
         var thisBoundingBox = this.getBoundingBox();
@@ -248,51 +214,8 @@ $.Rect.prototype = {
             [bottomRight, bottomLeft],
             [bottomLeft, topLeft]];
     },
-    rotate: function(degrees, pivot) {
-        degrees = $.positiveModulo(degrees, 360);
-        if (degrees === 0) {
-            return this.clone();
-        }
-        pivot = pivot || this.getCenter();
-        var newTopLeft = this.getTopLeft().rotate(degrees, pivot);
-        var newTopRight = this.getTopRight().rotate(degrees, pivot);
-
-        var diff = newTopRight.minus(newTopLeft);
-        // Handle floating point error
-        diff = diff.apply(function(x) {
-            var EPSILON = 1e-15;
-            return Math.abs(x) < EPSILON ? 0 : x;
-        });
-        var radians = Math.atan(diff.y / diff.x);
-        if (diff.x < 0) {
-            radians += Math.PI;
-        } else if (diff.y < 0) {
-            radians += 2 * Math.PI;
-        }
-        return new $.Rect(
-            newTopLeft.x,
-            newTopLeft.y,
-            this.width,
-            this.height,
-            radians / Math.PI * 180);
-    },
     getBoundingBox: function() {
-        if (this.degrees === 0) {
-            return this.clone();
-        }
-        var topLeft = this.getTopLeft();
-        var topRight = this.getTopRight();
-        var bottomLeft = this.getBottomLeft();
-        var bottomRight = this.getBottomRight();
-        var minX = Math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-        var maxX = Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
-        var minY = Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-        var maxY = Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
-        return new $.Rect(
-            minX,
-            minY,
-            maxX - minX,
-            maxY - minY);
+        return this.clone();
     },
     getIntegerBoundingBox: function() {
         var boundingBox = this.getBoundingBox();
@@ -330,7 +253,6 @@ $.Rect.prototype = {
             (Math.round(this.y * 100) / 100) + ", " +
             (Math.round(this.width * 100) / 100) + "x" +
             (Math.round(this.height * 100) / 100) + ", " +
-            (Math.round(this.degrees * 100) / 100) + "deg" +
             "]";
     }
 };
