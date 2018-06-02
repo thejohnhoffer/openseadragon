@@ -1,122 +1,14 @@
-/*
- * OpenSeadragon - Overlay
- *
- * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * - Redistributions of source code must retain the above copyright notice,
- *   this list of conditions and the following disclaimer.
- *
- * - Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- * - Neither the name of CodePlex Foundation nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+
 
 (function($) {
 
-    /**
-     * An enumeration of positions that an overlay may be assigned relative to
-     * the viewport.
-     * It is identical to OpenSeadragon.Placement but is kept for backward
-     * compatibility.
-     * @member OverlayPlacement
-     * @memberof OpenSeadragon
-     * @see OpenSeadragon.Placement
-     * @static
-     * @readonly
-     * @type {Object}
-     * @property {Number} CENTER
-     * @property {Number} TOP_LEFT
-     * @property {Number} TOP
-     * @property {Number} TOP_RIGHT
-     * @property {Number} RIGHT
-     * @property {Number} BOTTOM_RIGHT
-     * @property {Number} BOTTOM
-     * @property {Number} BOTTOM_LEFT
-     * @property {Number} LEFT
-     */
     $.OverlayPlacement = $.Placement;
-
-    /**
-     * An enumeration of possible ways to handle overlays rotation
-     * @member OverlayRotationMode
-     * @memberOf OpenSeadragon
-     * @static
-     * @readonly
-     * @property {Number} NO_ROTATION The overlay ignore the viewport rotation.
-     * @property {Number} EXACT The overlay use CSS 3 transforms to rotate with
-     * the viewport. If the overlay contains text, it will get rotated as well.
-     * @property {Number} BOUNDING_BOX The overlay adjusts for rotation by
-     * taking the size of the bounding box of the rotated bounds.
-     * Only valid for overlays with Rect location and scalable in both directions.
-     */
     $.OverlayRotationMode = $.freezeObject({
         NO_ROTATION: 1,
         EXACT: 2,
         BOUNDING_BOX: 3
     });
-
-    /**
-     * @class Overlay
-     * @classdesc Provides a way to float an HTML element on top of the viewer element.
-     *
-     * @memberof OpenSeadragon
-     * @param {Object} options
-     * @param {Element} options.element
-     * @param {OpenSeadragon.Point|OpenSeadragon.Rect} options.location - The
-     * location of the overlay on the image. If a {@link OpenSeadragon.Point}
-     * is specified, the overlay will be located at this location with respect
-     * to the placement option. If a {@link OpenSeadragon.Rect} is specified,
-     * the overlay will be placed at this location with the corresponding width
-     * and height and placement TOP_LEFT.
-     * @param {OpenSeadragon.Placement} [options.placement=OpenSeadragon.Placement.TOP_LEFT]
-     * Defines what part of the overlay should be at the specified options.location
-     * @param {OpenSeadragon.Overlay.OnDrawCallback} [options.onDraw]
-     * @param {Boolean} [options.checkResize=true] Set to false to avoid to
-     * check the size of the overlay everytime it is drawn in the directions
-     * which are not scaled. It will improve performances but will cause a
-     * misalignment if the overlay size changes.
-     * @param {Number} [options.width] The width of the overlay in viewport
-     * coordinates. If specified, the width of the overlay will be adjusted when
-     * the zoom changes.
-     * @param {Number} [options.height] The height of the overlay in viewport
-     * coordinates. If specified, the height of the overlay will be adjusted when
-     * the zoom changes.
-     * @param {Boolean} [options.rotationMode=OpenSeadragon.OverlayRotationMode.EXACT]
-     * How to handle the rotation of the viewport.
-     */
     $.Overlay = function(element, location, placement) {
-
-        /**
-         * onDraw callback signature used by {@link OpenSeadragon.Overlay}.
-         *
-         * @callback OnDrawCallback
-         * @memberof OpenSeadragon.Overlay
-         * @param {OpenSeadragon.Point} position
-         * @param {OpenSeadragon.Point} size
-         * @param {Element} element
-         */
-
         var options;
         if ($.isPlainObject(element)) {
             options = element;
@@ -127,15 +19,11 @@
                 placement: placement
             };
         }
-
         this.element = options.element;
         this.style = options.element.style;
         this._init(options);
     };
-
-    /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
-
         // private
         _init: function(options) {
             this.location = options.location;
@@ -160,21 +48,12 @@
                 this.location = this.location.getTopLeft();
                 this.placement = $.Placement.TOP_LEFT;
             }
-
             // Deprecated properties kept for backward compatibility.
             this.scales = this.width !== null && this.height !== null;
             this.bounds = new $.Rect(
                 this.location.x, this.location.y, this.width, this.height);
             this.position = this.location;
         },
-
-        /**
-         * Internal function to adjust the position of an overlay
-         * depending on it size and placement.
-         * @function
-         * @param {OpenSeadragon.Point} position
-         * @param {OpenSeadragon.Point} size
-         */
         adjust: function(position, size) {
             var properties = $.Placement.properties[this.placement];
             if (!properties) {
@@ -191,10 +70,6 @@
                 position.y -= size.y;
             }
         },
-
-        /**
-         * @function
-         */
         destroy: function() {
             var element = this.element;
             var style = this.style;
@@ -206,13 +81,12 @@
                 if (element.prevElementParent) {
                     style.display = 'none';
                     //element.prevElementParent.insertBefore(
-                    //    element,
-                    //    element.prevNextSibling
+                    // element,
+                    // element.prevNextSibling
                     //);
                     document.body.appendChild(element);
                 }
             }
-
             // clear the onDraw callback
             this.onDraw = null;
 
@@ -235,11 +109,6 @@
                 style[transformProp] = "";
             }
         },
-
-        /**
-         * @function
-         * @param {Element} container
-         */
         drawHTML: function(container, viewport) {
             var element = this.element;
             if (element.parentNode !== container) {
@@ -254,7 +123,6 @@
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
             }
-
             var positionAndSize = this._getOverlayPositionAndSize(viewport);
 
             var position = positionAndSize.position;
@@ -288,13 +156,11 @@
                         style[transformProp] = "";
                     }
                 }
-
                 if (style.display !== 'none') {
                     style.display = 'block';
                 }
             }
         },
-
         // private
         _getOverlayPositionAndSize: function(viewport) {
             var position = viewport.pixelFromPoint(this.location, true);
@@ -316,14 +182,12 @@
                     rotate = viewport.degrees;
                 }
             }
-
             return {
                 position: position,
                 size: size,
                 rotate: rotate
             };
         },
-
         // private
         _getSizeInPixels: function(viewport) {
             var width = this.size.x;
@@ -350,13 +214,11 @@
             }
             return new $.Point(width, height);
         },
-
         // private
         _getBoundingBox: function(rect, degrees) {
             var refPoint = this._getPlacementPoint(rect);
             return rect.rotate(degrees, refPoint).getBoundingBox();
         },
-
         // private
         _getPlacementPoint: function(rect) {
             var result = new $.Point(rect.x, rect.y);
@@ -375,7 +237,6 @@
             }
             return result;
         },
-
         // private
         _getTransformOrigin: function() {
             var result = "";
@@ -395,15 +256,6 @@
             }
             return result;
         },
-
-        /**
-         * Changes the overlay settings.
-         * @function
-         * @param {OpenSeadragon.Point|OpenSeadragon.Rect|Object} location
-         * If an object is specified, the options are the same than the constructor
-         * except for the element which can not be changed.
-         * @param {OpenSeadragon.Placement} placement
-         */
         update: function(location, placement) {
             var options = $.isPlainObject(location) ? location : {
                 location: location,
@@ -420,13 +272,6 @@
                 rotationMode: options.rotationMode || this.rotationMode
             });
         },
-
-        /**
-         * Returns the current bounds of the overlay in viewport coordinates
-         * @function
-         * @param {OpenSeadragon.Viewport} viewport the viewport
-         * @returns {OpenSeadragon.Rect} overlay bounds
-         */
         getBounds: function(viewport) {
             $.console.assert(viewport,
                 'A viewport must now be passed to Overlay.getBounds.');
@@ -446,7 +291,6 @@
             return this._adjustBoundsForRotation(
                 viewport, new $.Rect(location.x, location.y, width, height));
         },
-
         // private
         _adjustBoundsForRotation: function(viewport, bounds) {
             if (!viewport ||
@@ -468,11 +312,9 @@
                     positionAndSize.size.x,
                     positionAndSize.size.y));
             }
-
             // NO_ROTATION case
             return bounds.rotate(-viewport.degrees,
                 this._getPlacementPoint(bounds));
         }
     };
-
 }(OpenSeadragon));

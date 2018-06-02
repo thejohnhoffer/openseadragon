@@ -1,65 +1,7 @@
-/*
- * OpenSeadragon - LegacyTileSource
- *
- * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * - Redistributions of source code must retain the above copyright notice,
- *   this list of conditions and the following disclaimer.
- *
- * - Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- * - Neither the name of CodePlex Foundation nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+
 
 (function( $ ){
-
-/**
- * @class LegacyTileSource
- * @classdesc The LegacyTileSource allows simple, traditional image pyramids to be loaded
- * into an OpenSeadragon Viewer.  Basically, this translates to the historically
- * common practice of starting with a 'master' image, maybe a tiff for example,
- * and generating a set of 'service' images like one or more thumbnails, a medium
- * resolution image and a high resolution image in standard web formats like
- * png or jpg.
- *
- * @memberof OpenSeadragon
- * @extends OpenSeadragon.TileSource
- * @param {Array} levels An array of file descriptions, each is an object with
- *      a 'url', a 'width', and a 'height'.  Overriding classes can expect more
- *      properties but these properties are sufficient for this implementation.
- *      Additionally, the levels are required to be listed in order from
- *      smallest to largest.
- * @property {Number} aspectRatio
- * @property {Number} dimensions
- * @property {Number} tileSize
- * @property {Number} tileOverlap
- * @property {Number} minLevel
- * @property {Number} maxLevel
- * @property {Array}  levels
- */
 $.LegacyTileSource = function( levels ) {
-
     var options,
         width,
         height;
@@ -70,7 +12,6 @@ $.LegacyTileSource = function( levels ) {
             levels: levels
         };
     }
-
     //clean up the levels to make sure we support all formats
     options.levels = filterFiles( options.levels );
 
@@ -83,7 +24,6 @@ $.LegacyTileSource = function( levels ) {
         height = 0;
         $.console.error( "No supported image formats found" );
     }
-
     $.extend( true, options, {
         width: width,
         height: height,
@@ -92,20 +32,11 @@ $.LegacyTileSource = function( levels ) {
         minLevel: 0,
         maxLevel: options.levels.length > 0 ? options.levels.length - 1 : 0
     } );
-
     $.TileSource.apply( this, [ options ] );
 
     this.levels = options.levels;
 };
-
-$.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.LegacyTileSource.prototype */{
-    /**
-     * Determine if the data and/or url imply the image service is supported by
-     * this tile source.
-     * @function
-     * @param {Object|Array} data
-     * @param {String} optional - url
-     */
+$.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, {
     supports: function( data, url ){
         return (
             data.type &&
@@ -115,37 +46,18 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
             "legacy-image-pyramid" == data.documentElement.getAttribute('type')
         );
     },
-
-
-    /**
-     *
-     * @function
-     * @param {Object|XMLDocument} configuration - the raw configuration
-     * @param {String} dataUrl - the url the data was retreived from if any.
-     * @return {Object} options - A dictionary of keyword arguments sufficient
-     *      to configure this tile sources constructor.
-     */
     configure: function( configuration, dataUrl ){
-
         var options;
 
         if( !$.isPlainObject(configuration) ){
-
             options = configureFromXML( this, configuration );
 
         }else{
-
             options = configureFromObject( this, configuration );
         }
-
         return options;
 
     },
-
-    /**
-     * @function
-     * @param {Number} level
-     */
     getLevelScale: function ( level ) {
         var levelScale = NaN;
         if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
@@ -155,11 +67,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
         }
         return levelScale;
     },
-
-    /**
-     * @function
-     * @param {Number} level
-     */
     getNumTiles: function( level ) {
         var scale = this.getLevelScale( level );
         if ( scale ){
@@ -168,18 +75,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
             return new $.Point( 0, 0 );
         }
     },
-
-    /**
-     * This method is not implemented by this class other than to throw an Error
-     * announcing you have to implement it.  Because of the variety of tile
-     * server technologies, and various specifications for building image
-     * pyramids, this method is here to allow easy integration.
-     * @function
-     * @param {Number} level
-     * @param {Number} x
-     * @param {Number} y
-     * @throws {Error}
-     */
     getTileUrl: function ( level, x, y ) {
         var url = null;
         if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
@@ -188,14 +83,6 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
         return url;
     }
 } );
-
-/**
- * This method removes any files from the Array which dont conform to our
- * basic requirements for a 'level' in the LegacyTileSource.
- * @private
- * @inner
- * @function
- */
 function filterFiles( files ){
     var filtered = [],
         file,
@@ -216,50 +103,37 @@ function filterFiles( files ){
             $.console.error( 'Unsupported image format: %s', file.url ? file.url : '<no URL>' );
         }
     }
-
     return filtered.sort(function(a, b) {
         return a.height - b.height;
     });
-
 }
-
-/**
- * @private
- * @inner
- * @function
- */
 function configureFromXML( tileSource, xmlDoc ){
-
     if ( !xmlDoc || !xmlDoc.documentElement ) {
         throw new Error( $.getString( "Errors.Xml" ) );
     }
-
-    var root         = xmlDoc.documentElement,
-        rootName     = root.tagName,
-        conf         = null,
-        levels       = [],
+    var root = xmlDoc.documentElement,
+        rootName = root.tagName,
+        conf = null,
+        levels = [],
         level,
         i;
 
     if ( rootName == "image" ) {
-
         try {
             conf = {
-                type:        root.getAttribute( "type" ),
-                levels:      []
+                type: root.getAttribute( "type" ),
+                levels: []
             };
-
             levels = root.getElementsByTagName( "level" );
             for ( i = 0; i < levels.length; i++ ) {
                 level = levels[ i ];
 
                 conf.levels.push({
-                    url:    level.getAttribute( "url" ),
-                    width:  parseInt( level.getAttribute( "width" ), 10 ),
+                    url: level.getAttribute( "url" ),
+                    width: parseInt( level.getAttribute( "width" ), 10 ),
                     height: parseInt( level.getAttribute( "height" ), 10 )
                 });
             }
-
             return configureFromObject( tileSource, conf );
 
         } catch ( e ) {
@@ -272,19 +146,10 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName == "error" ) {
         throw new Error( 'Error: ' + xmlDoc );
     }
-
     throw new Error( 'Unknown element ' + rootName );
 }
-
-/**
- * @private
- * @inner
- * @function
- */
 function configureFromObject( tileSource, configuration ){
-
     return configuration.levels;
 
 }
-
 }( OpenSeadragon ));

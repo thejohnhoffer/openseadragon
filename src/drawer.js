@@ -1,114 +1,42 @@
-/*
- * OpenSeadragon - Drawer
- *
- * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2013 OpenSeadragon contributors
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * - Redistributions of source code must retain the above copyright notice,
- *   this list of conditions and the following disclaimer.
- *
- * - Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- * - Neither the name of CodePlex Foundation nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+
 
 (function( $ ){
-
-/**
- * @class Drawer
- * @memberof OpenSeadragon
- * @classdesc Handles rendering of tiles for an {@link OpenSeadragon.Viewer}.
- * @param {Object} options - Options for this Drawer.
- * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
- * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
- * @param {Element} options.element - Parent element.
- * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
- */
 $.Drawer = function( options ) {
-
     $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
 
     //backward compatibility for positional args while prefering more
     //idiomatic javascript options object as the only argument
-    var args  = arguments;
+    var args = arguments;
 
     if( !$.isPlainObject( options ) ){
         options = {
-            source:     args[ 0 ], // Reference to Viewer tile source.
-            viewport:   args[ 1 ], // Reference to Viewer viewport.
-            element:    args[ 2 ]  // Parent element.
+            source: args[ 0 ], // Reference to Viewer tile source.
+            viewport: args[ 1 ], // Reference to Viewer viewport.
+            element: args[ 2 ] // Parent element.
         };
     }
-
     $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
     $.console.assert( options.element, "[Drawer] options.element is required" );
 
     if ( options.source ) {
         $.console.error( "[Drawer] options.source is no longer accepted; use TiledImage instead" );
     }
-
     this.viewer = options.viewer;
     this.viewport = options.viewport;
     this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
     if (options.opacity) {
         $.console.error( "[Drawer] options.opacity is no longer accepted; set the opacity on the TiledImage instead" );
     }
+    this.useCanvas = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
 
-    this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
-    /**
-     * The parent element of this Drawer instance, passed in when the Drawer was created.
-     * The parent of {@link OpenSeadragon.Drawer#canvas}.
-     * @member {Element} container
-     * @memberof OpenSeadragon.Drawer#
-     */
-    this.container  = $.getElement( options.element );
-    /**
-     * A &lt;canvas&gt; element if the browser supports them, otherwise a &lt;div&gt; element.
-     * Child element of {@link OpenSeadragon.Drawer#container}.
-     * @member {Element} canvas
-     * @memberof OpenSeadragon.Drawer#
-     */
-    this.canvas     = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
-    /**
-     * 2d drawing context for {@link OpenSeadragon.Drawer#canvas} if it's a &lt;canvas&gt; element, otherwise null.
-     * @member {Object} context
-     * @memberof OpenSeadragon.Drawer#
-     */
-    this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
+    this.container = $.getElement( options.element );
 
-    /**
-     * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
-     * to the main canvas due to opacity. Lazily initialized.
-     */
+    this.canvas = $.makeNeutralElement( this.useCanvas ? "canvas" : "div" );
+
+    this.context = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
     this.sketchCanvas = null;
     this.sketchContext = null;
-
-    /**
-     * @member {Element} element
-     * @memberof OpenSeadragon.Drawer#
-     * @deprecated Alias for {@link OpenSeadragon.Drawer#container}.
-     */
-    this.element    = this.container;
+    this.element = this.container;
 
     // We force our container to ltr because our drawing math doesn't work in rtl.
     // This issue only affects our canvas renderer, but we do it always for consistency.
@@ -121,18 +49,15 @@ $.Drawer = function( options ) {
         this.canvas.width = viewportSize.x;
         this.canvas.height = viewportSize.y;
     }
-
-    this.canvas.style.width     = "100%";
-    this.canvas.style.height    = "100%";
-    this.canvas.style.position  = "absolute";
+    this.canvas.style.width = "100%";
+    this.canvas.style.height = "100%";
+    this.canvas.style.position = "absolute";
     $.setElementOpacity( this.canvas, this.opacity, true );
 
     // explicit left-align
     this.container.style.textAlign = "left";
     this.container.appendChild( this.canvas );
 };
-
-/** @lends OpenSeadragon.Drawer.prototype */
 $.Drawer.prototype = {
     // deprecated
     addOverlay: function( element, location, placement, onDraw ) {
@@ -140,33 +65,24 @@ $.Drawer.prototype = {
         this.viewer.addOverlay( element, location, placement, onDraw );
         return this;
     },
-
     // deprecated
     updateOverlay: function( element, location, placement ) {
         $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
         this.viewer.updateOverlay( element, location, placement );
         return this;
     },
-
     // deprecated
     removeOverlay: function( element ) {
         $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
         this.viewer.removeOverlay( element );
         return this;
     },
-
     // deprecated
     clearOverlays: function() {
         $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
         this.viewer.clearOverlays();
         return this;
     },
-
-    /**
-     * Set the opacity of the drawer.
-     * @param {Number} opacity
-     * @return {OpenSeadragon.Drawer} Chainable.
-     */
     setOpacity: function( opacity ) {
         $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
         var world = this.viewer.world;
@@ -175,11 +91,6 @@ $.Drawer.prototype = {
         }
         return this;
     },
-
-    /**
-     * Get the opacity of the drawer.
-     * @returns {Number}
-     */
     getOpacity: function() {
         $.console.error("drawer.getOpacity is deprecated. Use tiledImage.getOpacity instead.");
         var world = this.viewer.world;
@@ -192,26 +103,22 @@ $.Drawer.prototype = {
         }
         return maxOpacity;
     },
-
     // deprecated
     needsUpdate: function() {
         $.console.error( "[Drawer.needsUpdate] this function is deprecated. Use World.needsDraw instead." );
         return this.viewer.world.needsDraw();
     },
-
     // deprecated
     numTilesLoaded: function() {
         $.console.error( "[Drawer.numTilesLoaded] this function is deprecated. Use TileCache.numTilesLoaded instead." );
         return this.viewer.tileCache.numTilesLoaded();
     },
-
     // deprecated
     reset: function() {
         $.console.error( "[Drawer.reset] this function is deprecated. Use World.resetItems instead." );
         this.viewer.world.resetItems();
         return this;
     },
-
     // deprecated
     update: function() {
         $.console.error( "[Drawer.update] this function is deprecated. Use Drawer.clear and World.draw instead." );
@@ -219,28 +126,16 @@ $.Drawer.prototype = {
         this.viewer.world.draw();
         return this;
     },
-
-    /**
-     * @return {Boolean} True if rotation is supported.
-     */
     canRotate: function() {
         return this.useCanvas;
     },
-
-    /**
-     * Destroy the drawer (unload current loaded tiles)
-     */
     destroy: function() {
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
-        this.canvas.width  = 1;
+        this.canvas.width = 1;
         this.canvas.height = 1;
         this.sketchCanvas = null;
         this.sketchContext = null;
     },
-
-    /**
-     * Clears the Drawer so it's ready to draw another frame.
-     */
     clear: function() {
         this.canvas.innerHTML = "";
         if ( this.useCanvas ) {
@@ -258,7 +153,6 @@ $.Drawer.prototype = {
             this._clear();
         }
     },
-
     _clear: function (useSketch, bounds) {
         if (!this.useCanvas) {
             return;
@@ -271,13 +165,6 @@ $.Drawer.prototype = {
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
     },
-
-    /**
-     * Scale from OpenSeadragon viewer rectangle to drawer rectangle
-     * (ignoring rotation)
-     * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
-     * @return {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
-     */
     viewportToDrawerRectangle: function(rectangle) {
         var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
         var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
@@ -289,17 +176,6 @@ $.Drawer.prototype = {
             size.y * $.pixelDensityRatio
         );
     },
-
-    /**
-     * Draws the given tile.
-     * @param {OpenSeadragon.Tile} tile - The tile to draw.
-     * @param {Function} drawingHandler - Method for firing the drawing event if using canvas.
-     * drawingHandler({context, tile, rendered})
-     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
-     * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
-     * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
-     */
     drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
         $.console.assert(tile, '[Drawer.drawTile] tile is required');
         $.console.assert(drawingHandler, '[Drawer.drawTile] drawingHandler is required');
@@ -312,7 +188,6 @@ $.Drawer.prototype = {
             tile.drawHTML( this.canvas );
         }
     },
-
     _getContext: function( useSketch ) {
         var context = this.context;
         if ( useSketch ) {
@@ -343,66 +218,41 @@ $.Drawer.prototype = {
         }
         return context;
     },
-
     // private
     saveContext: function( useSketch ) {
         if (!this.useCanvas) {
             return;
         }
-
         this._getContext( useSketch ).save();
     },
-
     // private
     restoreContext: function( useSketch ) {
         if (!this.useCanvas) {
             return;
         }
-
         this._getContext( useSketch ).restore();
     },
-
     // private
     setClip: function(rect, useSketch) {
         if (!this.useCanvas) {
             return;
         }
-
         var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();
     },
-
     // private
     drawRectangle: function(rect, fillStyle, useSketch) {
         if (!this.useCanvas) {
             return;
         }
-
         var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
         context.fillRect(rect.x, rect.y, rect.width, rect.height);
         context.restore();
     },
-
-    /**
-     * Blends the sketch canvas in the main canvas.
-     * @param {Object} options The options
-     * @param {Float} options.opacity The opacity of the blending.
-     * @param {Float} [options.scale=1] The scale at which tiles were drawn on
-     * the sketch. Default is 1.
-     * Use scale to draw at a lower scale and then enlarge onto the main canvas.
-     * @param {OpenSeadragon.Point} [options.translate] A translation vector
-     * that was used to draw the tiles
-     * @param {String} [options.compositeOperation] - How the image is
-     * composited onto other images; see compositeOperation in
-     * {@link OpenSeadragon.Options} for possible values.
-     * @param {OpenSeadragon.Rect} [options.bounds] The part of the sketch
-     * canvas to blend in the main canvas. If specified, options.scale and
-     * options.translate get ignored.
-     */
     blendSketch: function(opacity, scale, translate, compositeOperation) {
         var options = opacity;
         if (!$.isPlainObject(options)) {
@@ -443,7 +293,6 @@ $.Drawer.prototype = {
             if (bounds.y + bounds.height > this.canvas.height) {
                 bounds.height = this.canvas.height - bounds.y;
             }
-
             this.context.drawImage(
                 this.sketchCanvas,
                 bounds.x,
@@ -483,13 +332,11 @@ $.Drawer.prototype = {
         }
         this.context.restore();
     },
-
     // private
     drawDebugInfo: function(tile, count, i, tiledImage) {
         if ( !this.useCanvas ) {
             return;
         }
-
         var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
         var context = this.context;
         context.save();
@@ -508,7 +355,6 @@ $.Drawer.prototype = {
                     tiledImage._getRotationPoint(true), true)
             });
         }
-
         context.strokeRect(
             tile.position.x * $.pixelDensityRatio,
             tile.position.y * $.pixelDensityRatio,
@@ -575,7 +421,6 @@ $.Drawer.prototype = {
         }
         context.restore();
     },
-
     // private
     debugRect: function(rect) {
         if ( this.useCanvas ) {
@@ -595,21 +440,13 @@ $.Drawer.prototype = {
             context.restore();
         }
     },
-
-    /**
-     * Get the canvas size
-     * @param {Boolean} sketch If set to true return the size of the sketch canvas
-     * @returns {OpenSeadragon.Point} The size of the canvas
-     */
     getCanvasSize: function(sketch) {
         var canvas = this._getContext(sketch).canvas;
         return new $.Point(canvas.width, canvas.height);
     },
-
     getCanvasCenter: function() {
         return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
     },
-
     // private
     _offsetForRotation: function(options) {
         var point = options.point ?
@@ -623,13 +460,11 @@ $.Drawer.prototype = {
         context.rotate(Math.PI / 180 * options.degrees);
         context.translate(-point.x, -point.y);
     },
-
     // private
     _restoreRotationChanges: function(useSketch) {
         var context = this._getContext(useSketch);
         context.restore();
     },
-
     // private
     _calculateCanvasSize: function() {
         var pixelDensityRatio = $.pixelDensityRatio;
@@ -639,7 +474,6 @@ $.Drawer.prototype = {
             y: viewportSize.y * pixelDensityRatio
         };
     },
-
     // private
     _calculateSketchCanvasSize: function() {
         var canvasSize = this._calculateCanvasSize();
@@ -657,5 +491,4 @@ $.Drawer.prototype = {
         };
     }
 };
-
 }( OpenSeadragon ));
