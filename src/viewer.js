@@ -56,6 +56,9 @@ $.Viewer = function( options ) {
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
+    // TEMP from controldock.js
+    this.container = $.makeNeutralElement( 'div' );
+
     this.element = this.element || document.getElementById( this.id );
     this.canvas = $.makeNeutralElement( "div" );
 

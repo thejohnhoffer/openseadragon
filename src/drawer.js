@@ -20,6 +20,8 @@ $.Drawer = function( options ) {
 
     this.container = $.getElement( options.element );
 
+    this.canvas = $.makeNeutralElement("canvas");
+    this.context = this.canvas.getContext( "2d" );
 
     this.sketchCanvas = null;
     this.sketchContext = null;
