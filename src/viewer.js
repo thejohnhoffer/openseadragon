@@ -59,11 +59,8 @@ $.Viewer = function( options ) {
         "lastZoomTime": null
     };
     this._sequenceIndex = 0;
-    this._firstOpen = true;
     this._updateRequestId = null;
     this._loadQueue = [];
-
-    this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -179,14 +176,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     isOpen: function () {
         return !!this.world.getItemCount();
     },
-    // deprecated
-    openDzi: function ( dzi ) {
-        return this.open( dzi );
-    },
-    // deprecated
-    openTileSource: function ( tileSource ) {
-        return this.open( tileSource );
-    },
     open: function (tileSources) {
         var _this = this;
 
@@ -221,7 +210,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                 if (successes) {
                     _this.viewport.goHome( true );
                     _this.viewport.update();
-                    _this._firstOpen = false;
 
                     var source = tileSources[0];
                     if (source.tileSource) {
