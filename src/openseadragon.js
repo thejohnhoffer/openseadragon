@@ -316,13 +316,7 @@ function OpenSeadragon( options ){
             placeholderFillStyle: null,
 
             //REFERENCE STRIP SETTINGS
-            showReferenceStrip: false,
-            referenceStripScroll: 'horizontal',
-            referenceStripElement: null,
-            referenceStripHeight: null,
-            referenceStripWidth: null,
-            referenceStripPosition: 'BOTTOM_LEFT',
-            referenceStripSizeRatio: 0.2,
+            show: false,
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows: 3, //or columns depending on layout

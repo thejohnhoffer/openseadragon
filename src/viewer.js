@@ -81,9 +81,6 @@ $.Viewer = function( options ) {
         //TODO: rename navImages to uiImages
         navImages: null,
 
-        //interface button controls
-        buttons: null,
-
         //TODO: this is defunct so safely remove it
         profiler: null
 
@@ -172,38 +169,6 @@ $.Viewer = function( options ) {
     this.bodyOverflow = document.body.style.overflow;
     this.docOverflow = document.documentElement.style.overflow;
 
-    this.innerTracker = new $.MouseTracker({
-        element: this.canvas,
-        startDisabled: !this.mouseNavEnabled,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        dblClickTimeThreshold: this.dblClickTimeThreshold,
-        dblClickDistThreshold: this.dblClickDistThreshold,
-        keyDownHandler: $.delegate( this, onCanvasKeyDown ),
-        keyHandler: $.delegate( this, onCanvasKeyPress ),
-        clickHandler: $.delegate( this, onCanvasClick ),
-        dblClickHandler: $.delegate( this, onCanvasDblClick ),
-        dragHandler: $.delegate( this, onCanvasDrag ),
-        dragEndHandler: $.delegate( this, onCanvasDragEnd ),
-        enterHandler: $.delegate( this, onCanvasEnter ),
-        exitHandler: $.delegate( this, onCanvasExit ),
-        pressHandler: $.delegate( this, onCanvasPress ),
-        releaseHandler: $.delegate( this, onCanvasRelease ),
-        nonPrimaryPressHandler: $.delegate( this, onCanvasNonPrimaryPress ),
-        nonPrimaryReleaseHandler: $.delegate( this, onCanvasNonPrimaryRelease ),
-        scrollHandler: $.delegate( this, onCanvasScroll ),
-        pinchHandler: $.delegate( this, onCanvasPinch )
-    });
-    this.outerTracker = new $.MouseTracker({
-        element: this.container,
-        startDisabled: !this.mouseNavEnabled,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        dblClickTimeThreshold: this.dblClickTimeThreshold,
-        dblClickDistThreshold: this.dblClickDistThreshold,
-        enterHandler: $.delegate( this, onContainerEnter ),
-        exitHandler: $.delegate( this, onContainerExit )
-    });
     if( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
     }
@@ -284,20 +249,6 @@ $.Viewer = function( options ) {
     this.overlaysContainer = $.makeNeutralElement( "div" );
     this.canvas.appendChild( this.overlaysContainer );
 
-    // Now that we have a drawer, see if it supports rotate. If not we need to remove the rotate buttons
-    if (!this.drawer.canRotate()) {
-        // Disable/remove the rotate left/right buttons since they aren't supported
-        if (this.rotateLeft) {
-            i = this.buttons.buttons.indexOf(this.rotateLeft);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateLeft.element);
-        }
-        if (this.rotateRight) {
-            i = this.buttons.buttons.indexOf(this.rotateRight);
-            this.buttons.buttons.splice(i, 1);
-            this.buttons.element.removeChild(this.rotateRight.element);
-        }
-    }
     //Instantiate a navigator if configured
     if ( this.showNavigator){
         this.navigator = new $.Navigator({
@@ -361,10 +312,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
         if (this.sequenceMode && $.isArray(tileSources)) {
-            if (this.referenceStrip) {
-                this.referenceStrip.destroy();
-                this.referenceStrip = null;
-            }
             if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
               this.initialPage = initialPage;
             }
@@ -372,12 +319,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
             if (this.tileSources.length) {
                 this.open(this.tileSources[this._sequenceIndex]);
-
-                if ( this.showReferenceStrip ){
-                    this.addReferenceStrip();
-                }
             }
-            this._updateSequenceButtons( this._sequenceIndex );
             return;
         }
         if (!$.isArray(tileSources)) {
@@ -506,10 +448,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //this.unbindSequenceControls()
         //this.unbindStandardControls()
 
-        if (this.referenceStrip) {
-            this.referenceStrip.destroy();
-            this.referenceStrip = null;
-        }
         if ( this._updateRequestId !== null ) {
             $.cancelAnimationFrame( this._updateRequestId );
             this._updateRequestId = null;
@@ -527,13 +465,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 this.element.removeChild(this.element.firstChild);
             }
         }
-        // destroy the mouse trackers
-        if (this.innerTracker){
-            this.innerTracker.destroy();
-        }
-        if (this.outerTracker){
-            this.outerTracker.destroy();
-        }
         THIS[ this.hash ] = null;
         delete THIS[ this.hash ];
 
@@ -545,13 +476,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.element = null;
     },
     isMouseNavEnabled: function () {
-        return this.innerTracker.isTracking();
+        return false;
     },
     setMouseNavEnabled: function( enabled ){
-        this.innerTracker.setTracking( enabled );
-        this.outerTracker.setTracking( enabled );
-
-        this.raiseEvent( 'mouse-enabled', { enabled: enabled } );
         return this;
     },
     areControlsEnabled: function () {
@@ -1056,220 +983,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         // Image Sequence Controls
         //////////////////////////////////////////////////////////////////////////
-        var onFocusHandler = $.delegate( this, onFocus ),
-            onBlurHandler = $.delegate( this, onBlur ),
-            onNextHandler = $.delegate( this, onNext ),
-            onPreviousHandler = $.delegate( this, onPrevious ),
-            navImages = this.navImages,
-            useGroup = true;
 
-        if( this.showSequenceControl ){
-            if( this.previousButton || this.nextButton ){
-                //if we are binding to custom buttons then layout and
-                //grouping is the responsibility of the page author
-                useGroup = false;
-            }
-            this.previousButton = new $.Button({
-                element: this.previousButton ? $.getElement( this.previousButton ) : null,
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip: $.getString( "Tooltips.PreviousPage" ),
-                srcRest: resolveUrl( this.prefixUrl, navImages.previous.REST ),
-                srcGroup: resolveUrl( this.prefixUrl, navImages.previous.GROUP ),
-                srcHover: resolveUrl( this.prefixUrl, navImages.previous.HOVER ),
-                srcDown: resolveUrl( this.prefixUrl, navImages.previous.DOWN ),
-                onRelease: onPreviousHandler,
-                onFocus: onFocusHandler,
-                onBlur: onBlurHandler
-            });
-            this.nextButton = new $.Button({
-                element: this.nextButton ? $.getElement( this.nextButton ) : null,
-                clickTimeThreshold: this.clickTimeThreshold,
-                clickDistThreshold: this.clickDistThreshold,
-                tooltip: $.getString( "Tooltips.NextPage" ),
-                srcRest: resolveUrl( this.prefixUrl, navImages.next.REST ),
-                srcGroup: resolveUrl( this.prefixUrl, navImages.next.GROUP ),
-                srcHover: resolveUrl( this.prefixUrl, navImages.next.HOVER ),
-                srcDown: resolveUrl( this.prefixUrl, navImages.next.DOWN ),
-                onRelease: onNextHandler,
-                onFocus: onFocusHandler,
-                onBlur: onBlurHandler
-            });
-            if( !this.navPrevNextWrap ){
-                this.previousButton.disable();
-            }
-            if (!this.tileSources || !this.tileSources.length) {
-                this.nextButton.disable();
-            }
-            if( useGroup ){
-                this.paging = new $.ButtonGroup({
-                    buttons: [
-                        this.previousButton,
-                        this.nextButton
-                    ],
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold
-                });
-                this.pagingControl = this.paging.element;
-
-                if( this.toolbar ){
-                    this.toolbar.addControl(
-                        this.pagingControl,
-                        {anchor: $.ControlAnchor.BOTTOM_RIGHT}
-                    );
-                }else{
-                    this.addControl(
-                        this.pagingControl,
-                        {anchor: this.sequenceControlAnchor || $.ControlAnchor.TOP_LEFT}
-                    );
-                }
-            }
-        }
         return this;
     },
     bindStandardControls: function(){
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
         //////////////////////////////////////////////////////////////////////////
-        var beginZoomingInHandler = $.delegate( this, beginZoomingIn ),
-            endZoomingHandler = $.delegate( this, endZooming ),
-            doSingleZoomInHandler = $.delegate( this, doSingleZoomIn ),
-            beginZoomingOutHandler = $.delegate( this, beginZoomingOut ),
-            doSingleZoomOutHandler = $.delegate( this, doSingleZoomOut ),
-            onHomeHandler = $.delegate( this, onHome ),
-            onFullScreenHandler = $.delegate( this, onFullScreen ),
-            onRotateLeftHandler = $.delegate( this, onRotateLeft ),
-            onRotateRightHandler = $.delegate( this, onRotateRight ),
-            onFocusHandler = $.delegate( this, onFocus ),
-            onBlurHandler = $.delegate( this, onBlur ),
-            navImages = this.navImages,
-            buttons = [],
-            useGroup = true;
-
-        if ( this.showNavigationControl ) {
-            if( this.zoomInButton || this.zoomOutButton ||
-                this.homeButton || this.fullPageButton ||
-                this.rotateLeftButton || this.rotateRightButton ) {
-                //if we are binding to custom buttons then layout and
-                //grouping is the responsibility of the page author
-                useGroup = false;
-            }
-            if ( this.showZoomControl ) {
-                buttons.push( this.zoomInButton = new $.Button({
-                    element: this.zoomInButton ? $.getElement( this.zoomInButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.ZoomIn" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.zoomIn.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.zoomIn.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.zoomIn.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.zoomIn.DOWN ),
-                    onPress: beginZoomingInHandler,
-                    onRelease: endZoomingHandler,
-                    onClick: doSingleZoomInHandler,
-                    onEnter: beginZoomingInHandler,
-                    onExit: endZoomingHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-                buttons.push( this.zoomOutButton = new $.Button({
-                    element: this.zoomOutButton ? $.getElement( this.zoomOutButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.ZoomOut" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.zoomOut.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.zoomOut.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.zoomOut.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.zoomOut.DOWN ),
-                    onPress: beginZoomingOutHandler,
-                    onRelease: endZoomingHandler,
-                    onClick: doSingleZoomOutHandler,
-                    onEnter: beginZoomingOutHandler,
-                    onExit: endZoomingHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-            }
-            if ( this.showHomeControl ) {
-                buttons.push( this.homeButton = new $.Button({
-                    element: this.homeButton ? $.getElement( this.homeButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.Home" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.home.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.home.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.home.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.home.DOWN ),
-                    onRelease: onHomeHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-            }
-            if ( this.showFullPageControl ) {
-                buttons.push( this.fullPageButton = new $.Button({
-                    element: this.fullPageButton ? $.getElement( this.fullPageButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.FullPage" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.fullpage.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.fullpage.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.fullpage.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.fullpage.DOWN ),
-                    onRelease: onFullScreenHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-            }
-            if ( this.showRotationControl ) {
-                buttons.push( this.rotateLeftButton = new $.Button({
-                    element: this.rotateLeftButton ? $.getElement( this.rotateLeftButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.RotateLeft" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.rotateleft.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.rotateleft.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.rotateleft.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.rotateleft.DOWN ),
-                    onRelease: onRotateLeftHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-                buttons.push( this.rotateRightButton = new $.Button({
-                    element: this.rotateRightButton ? $.getElement( this.rotateRightButton ) : null,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold,
-                    tooltip: $.getString( "Tooltips.RotateRight" ),
-                    srcRest: resolveUrl( this.prefixUrl, navImages.rotateright.REST ),
-                    srcGroup: resolveUrl( this.prefixUrl, navImages.rotateright.GROUP ),
-                    srcHover: resolveUrl( this.prefixUrl, navImages.rotateright.HOVER ),
-                    srcDown: resolveUrl( this.prefixUrl, navImages.rotateright.DOWN ),
-                    onRelease: onRotateRightHandler,
-                    onFocus: onFocusHandler,
-                    onBlur: onBlurHandler
-                }));
-            }
-            if ( useGroup ) {
-                this.buttons = new $.ButtonGroup({
-                    buttons: buttons,
-                    clickTimeThreshold: this.clickTimeThreshold,
-                    clickDistThreshold: this.clickDistThreshold
-                });
-                this.navControl = this.buttons.element;
-                this.addHandler( 'open', $.delegate( this, lightUp ) );
-
-                if( this.toolbar ){
-                    this.toolbar.addControl(
-                        this.navControl,
-                        {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
-                    );
-                } else {
-                    this.addControl(
-                        this.navControl,
-                        {anchor: this.navigationControlAnchor || $.ControlAnchor.TOP_LEFT}
-                    );
-                }
-            }
-        }
         return this;
     },
     currentPage: function() {
@@ -1279,13 +999,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if( this.tileSources && page >= 0 && page < this.tileSources.length ){
             this._sequenceIndex = page;
 
-            this._updateSequenceButtons( page );
-
             this.open( this.tileSources[ page ] );
 
-            if( this.referenceStrip ){
-                this.referenceStrip.setFocus( page );
-            }
             this.raiseEvent( 'page', { page: page } );
         }
         return this;
@@ -1374,28 +1089,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return null;
         }
     },
-    _updateSequenceButtons: function( page ) {
-            if ( this.nextButton ) {
-                if(!this.tileSources || this.tileSources.length - 1 === page) {
-                    //Disable next button
-                    if ( !this.navPrevNextWrap ) {
-                        this.nextButton.disable();
-                    }
-                } else {
-                    this.nextButton.enable();
-                }
-            }
-            if ( this.previousButton ) {
-                if ( page > 0 ) {
-                    //Enable previous button
-                    this.previousButton.enable();
-                } else {
-                    if ( !this.navPrevNextWrap ) {
-                        this.previousButton.disable();
-                    }
-                }
-            }
-      },
     _showMessage: function ( message ) {
         this._hideMessage();
 
@@ -1438,39 +1131,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     _cancelPendingImages: function() {
         this._loadQueue = [];
     },
-    removeReferenceStrip: function() {
-        this.showReferenceStrip = false;
-
-        if (this.referenceStrip) {
-            this.referenceStrip.destroy();
-            this.referenceStrip = null;
-        }
-    },
-    addReferenceStrip: function() {
-        this.showReferenceStrip = true;
-
-        if (this.sequenceMode) {
-            if (this.referenceStrip) {
-                return;
-            }
-            if (this.tileSources.length && this.tileSources.length > 1) {
-                this.referenceStrip = new $.ReferenceStrip({
-                    id: this.referenceStripElement,
-                    position: this.referenceStripPosition,
-                    sizeRatio: this.referenceStripSizeRatio,
-                    scroll: this.referenceStripScroll,
-                    height: this.referenceStripHeight,
-                    width: this.referenceStripWidth,
-                    tileSources: this.tileSources,
-                    prefixUrl: this.prefixUrl,
-                    viewer: this
-                });
-                this.referenceStrip.setFocus( this._sequenceIndex );
-            }
-        } else {
-            $.console.warn('Attempting to display a reference strip while "sequenceMode" is off.');
-        }
-    }
 });
 function _getSafeElemSize (oElement) {
     oElement = $.getElement( oElement );
@@ -1697,425 +1357,14 @@ function abortControlsAutoHide( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Default view event handlers.
 ///////////////////////////////////////////////////////////////////////////////
-function onFocus(){
-    abortControlsAutoHide( this );
-}
-function onBlur(){
-    beginControlsAutoHide( this );
-
-}
-function onCanvasKeyDown( event ) {
-    var canvasKeyDownEventArgs = {
-      originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
-      preventVerticalPan: event.preventVerticalPan,
-      preventHorizontalPan: event.preventHorizontalPan
-    };
-    this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
-
-    if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
-            case 38://up arrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(1.1);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            case 40://down arrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            case 37://left arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            case 39://right arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            default:
-                //console.log( 'navigator keycode %s', event.keyCode );
-                return true;
-        }
-    } else {
-        return true;
-    }
-}
-function onCanvasKeyPress( event ) {
-    var canvasKeyPressEventArgs = {
-      originalEvent: event.originalEvent,
-      preventDefaultAction: event.preventDefaultAction,
-      preventVerticalPan: event.preventVerticalPan,
-      preventHorizontalPan: event.preventHorizontalPan
-    };
-    // This event is documented in onCanvasKeyDown
-    this.raiseEvent('canvas-key', canvasKeyPressEventArgs);
-
-    if ( !canvasKeyPressEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
-        switch( event.keyCode ){
-            case 43://=|+
-            case 61://=|+
-                this.viewport.zoomBy(1.1);
-                this.viewport.applyConstraints();
-                return false;
-            case 45://-|_
-                this.viewport.zoomBy(0.9);
-                this.viewport.applyConstraints();
-                return false;
-            case 48://0|)
-                this.viewport.goHome();
-                this.viewport.applyConstraints();
-                return false;
-            case 119://w
-            case 87://W
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(1.1);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                    }
-                    this.viewport.applyConstraints();
-                  }
-                  return false;
-            case 115://s
-            case 83://S
-                if (!canvasKeyPressEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            case 97://a
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            case 100://d
-                if (!canvasKeyPressEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                  this.viewport.applyConstraints();
-                }
-                return false;
-            default:
-                //console.log( 'navigator keycode %s', event.keyCode );
-                return true;
-        }
-    } else {
-        return true;
-    }
-}
-function onCanvasClick( event ) {
-    var gestureSettings;
-
-    var haveKeyboardFocus = document.activeElement == this.canvas;
-
-    // If we don't have keyboard focus, request it.
-    if ( !haveKeyboardFocus ) {
-        this.canvas.focus();
-    }
-    var canvasClickEventArgs = {
-        tracker: event.eventSource,
-        position: event.position,
-        quick: event.quick,
-        shift: event.shift,
-        originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
-    };
-    this.raiseEvent( 'canvas-click', canvasClickEventArgs);
-
-    if ( !canvasClickEventArgs.preventDefaultAction && this.viewport && event.quick ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.clickToZoom ) {
-            this.viewport.zoomBy(
-                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
-                gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-            );
-            this.viewport.applyConstraints();
-        }
-    }
-}
-function onCanvasDblClick( event ) {
-    var gestureSettings;
-
-    var canvasDblClickEventArgs = {
-        tracker: event.eventSource,
-        position: event.position,
-        shift: event.shift,
-        originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
-    };
-    this.raiseEvent( 'canvas-double-click', canvasDblClickEventArgs);
-
-    if ( !canvasDblClickEventArgs.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.dblClickToZoom ) {
-            this.viewport.zoomBy(
-                event.shift ? 1.0 / this.zoomPerClick : this.zoomPerClick,
-                gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-            );
-            this.viewport.applyConstraints();
-        }
-    }
-}
-function onCanvasDrag( event ) {
-    var gestureSettings;
-
-    var canvasDragEventArgs = {
-        tracker: event.eventSource,
-        position: event.position,
-        delta: event.delta,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent,
-        preventDefaultAction: event.preventDefaultAction
-    };
-    this.raiseEvent( 'canvas-drag', canvasDragEventArgs);
-
-    if ( !canvasDragEventArgs.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if( !this.panHorizontal ){
-            event.delta.x = 0;
-        }
-        if( !this.panVertical ){
-            event.delta.y = 0;
-        }
-        if( this.constrainDuringPan ){
-            var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
-
-            this.viewport.centerSpringX.target.value += delta.x;
-            this.viewport.centerSpringY.target.value += delta.y;
-
-            var bounds = this.viewport.getBounds();
-            var constrainedBounds = this.viewport.getConstrainedBounds();
-
-            this.viewport.centerSpringX.target.value -= delta.x;
-            this.viewport.centerSpringY.target.value -= delta.y;
-
-            if (bounds.x != constrainedBounds.x) {
-                event.delta.x = 0;
-            }
-            if (bounds.y != constrainedBounds.y) {
-                event.delta.y = 0;
-            }
-        }
-        this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
-    }
-}
-function onCanvasDragEnd( event ) {
-    if (!event.preventDefaultAction && this.viewport) {
-        var gestureSettings = this.gestureSettingsByDeviceType(event.pointerType);
-        if (gestureSettings.flickEnabled &&
-            event.speed >= gestureSettings.flickMinSpeed) {
-            var amplitudeX = 0;
-            if (this.panHorizontal) {
-                amplitudeX = gestureSettings.flickMomentum * event.speed *
-                    Math.cos(event.direction);
-            }
-            var amplitudeY = 0;
-            if (this.panVertical) {
-                amplitudeY = gestureSettings.flickMomentum * event.speed *
-                    Math.sin(event.direction);
-            }
-            var center = this.viewport.pixelFromPoint(
-                this.viewport.getCenter(true));
-            var target = this.viewport.pointFromPixel(
-                new $.Point(center.x - amplitudeX, center.y - amplitudeY));
-            this.viewport.panTo(target, false);
-        }
-        this.viewport.applyConstraints();
-    }
-    this.raiseEvent('canvas-drag-end', {
-        tracker: event.eventSource,
-        position: event.position,
-        speed: event.speed,
-        direction: event.direction,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasEnter( event ) {
-    this.raiseEvent( 'canvas-enter', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        buttons: event.buttons,
-        pointers: event.pointers,
-        insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasExit( event ) {
-    if (window.location != window.parent.location){
-        $.MouseTracker.resetAllMouseTrackers();
-    }
-    this.raiseEvent( 'canvas-exit', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        buttons: event.buttons,
-        pointers: event.pointers,
-        insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasPress( event ) {
-    this.raiseEvent( 'canvas-press', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasRelease( event ) {
-    this.raiseEvent( 'canvas-release', {
-        tracker: event.eventSource,
-        pointerType: event.pointerType,
-        position: event.position,
-        insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasNonPrimaryPress( event ) {
-    this.raiseEvent( 'canvas-nonprimary-press', {
-        tracker: event.eventSource,
-        position: event.position,
-        pointerType: event.pointerType,
-        button: event.button,
-        buttons: event.buttons,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasNonPrimaryRelease( event ) {
-    this.raiseEvent( 'canvas-nonprimary-release', {
-        tracker: event.eventSource,
-        position: event.position,
-        pointerType: event.pointerType,
-        button: event.button,
-        buttons: event.buttons,
-        originalEvent: event.originalEvent
-    });
-}
-function onCanvasPinch( event ) {
-    var gestureSettings,
-        centerPt,
-        lastCenterPt,
-        panByPt;
-
-    if ( !event.preventDefaultAction && this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if ( gestureSettings.pinchToZoom ) {
-            centerPt = this.viewport.pointFromPixel( event.center, true );
-            lastCenterPt = this.viewport.pointFromPixel( event.lastCenter, true );
-            panByPt = lastCenterPt.minus( centerPt );
-            if( !this.panHorizontal ) {
-                panByPt.x = 0;
-            }
-            if( !this.panVertical ) {
-                panByPt.y = 0;
-            }
-            this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
-            if ( gestureSettings.zoomToRefPoint ) {
-                this.viewport.panBy(panByPt, true);
-            }
-            this.viewport.applyConstraints();
-        }
-        if ( gestureSettings.pinchRotate ) {
-            // Pinch rotate
-            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
-                event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
-            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
-                event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
-            this.viewport.setRotation(this.viewport.getRotation() + ((angle1 - angle2) * (180 / Math.PI)));
-        }
-    }
-    this.raiseEvent('canvas-pinch', {
-        tracker: event.eventSource,
-        gesturePoints: event.gesturePoints,
-        lastCenter: event.lastCenter,
-        center: event.center,
-        lastDistance: event.lastDistance,
-        distance: event.distance,
-        shift: event.shift,
-        originalEvent: event.originalEvent
-    });
-    //cancels event
-    return false;
-}
-function onCanvasScroll( event ) {
-    var gestureSettings,
-        factor,
-        thisScrollTime,
-        deltaScrollTime;
-    thisScrollTime = $.now();
-    deltaScrollTime = thisScrollTime - this._lastScrollTime;
-    if (deltaScrollTime > this.minScrollDeltaTime) {
-        this._lastScrollTime = thisScrollTime;
-
-        if ( !event.preventDefaultAction && this.viewport ) {
-            gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-            if ( gestureSettings.scrollToZoom ) {
-                factor = Math.pow( this.zoomPerScroll, event.scroll );
-                this.viewport.zoomBy(
-                    factor,
-                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-                );
-                this.viewport.applyConstraints();
-            }
-        }
-        this.raiseEvent( 'canvas-scroll', {
-            tracker: event.eventSource,
-            position: event.position,
-            scroll: event.scroll,
-            shift: event.shift,
-            originalEvent: event.originalEvent
-        });
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            //cancels event
-            return false;
-        }
-    }
-    else {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
-        if (gestureSettings && gestureSettings.scrollToZoom) {
-            return false; // We are swallowing this event
-        }
-    }
-}
 function onContainerEnter( event ) {
     THIS[ this.hash ].mouseInside = true;
     abortControlsAutoHide( this );
 
     this.raiseEvent( 'container-enter', {
-        tracker: event.eventSource,
         position: event.position,
-        buttons: event.buttons,
         pointers: event.pointers,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
     });
 }
@@ -2127,12 +1376,9 @@ function onContainerExit( event ) {
         }
     }
     this.raiseEvent( 'container-exit', {
-        tracker: event.eventSource,
         position: event.position,
-        buttons: event.buttons,
         pointers: event.pointers,
         insideElementPressed: event.insideElementPressed,
-        buttonDownAny: event.buttonDownAny,
         originalEvent: event.originalEvent
     });
 }
@@ -2184,9 +1430,6 @@ function updateOnce( viewer ) {
     if (viewportChange) {
         viewer.raiseEvent('viewport-change');
     }
-    if( viewer.referenceStrip ){
-        animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
-    }
     if ( !THIS[ viewer.hash ].animating && animated ) {
         viewer.raiseEvent( "animation-start" );
         abortControlsAutoHide( viewer );
@@ -2223,24 +1466,6 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 // Navigation Controls
 ///////////////////////////////////////////////////////////////////////////////
-function resolveUrl( prefix, url ) {
-    return prefix ? prefix + url : url;
-}
-function beginZoomingIn() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-function beginZoomingOut() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-function endZooming() {
-    THIS[ this.hash ].zooming = false;
-}
 function scheduleZoom( viewer ) {
     $.requestAnimationFrame( $.delegate( viewer, doZoom ) );
 }
@@ -2259,86 +1484,5 @@ function doZoom() {
         THIS[ this.hash ].lastZoomTime = currentTime;
         scheduleZoom( this );
     }
-}
-function doSingleZoomIn() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            this.zoomPerClick / 1.0
-        );
-        this.viewport.applyConstraints();
-    }
-}
-function doSingleZoomOut() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            1.0 / this.zoomPerClick
-        );
-        this.viewport.applyConstraints();
-    }
-}
-function lightUp() {
-    this.buttons.emulateEnter();
-    this.buttons.emulateExit();
-}
-function onHome() {
-    if ( this.viewport ) {
-        this.viewport.goHome();
-    }
-}
-function onFullScreen() {
-    if ( this.isFullPage() && !$.isFullScreen() ) {
-        // Is fullPage but not fullScreen
-        this.setFullPage( false );
-    } else {
-        this.setFullScreen( !this.isFullPage() );
-    }
-    // correct for no mouseout event on change
-    if ( this.buttons ) {
-        this.buttons.emulateExit();
-    }
-    this.fullPageButton.element.focus();
-    if ( this.viewport ) {
-        this.viewport.applyConstraints();
-    }
-}
-function onRotateLeft() {
-    if ( this.viewport ) {
-        var currRotation = this.viewport.getRotation();
-        if (currRotation === 0) {
-            currRotation = 270;
-        }
-        else {
-            currRotation -= 90;
-        }
-        this.viewport.setRotation(currRotation);
-    }
-}
-function onRotateRight() {
-    if ( this.viewport ) {
-        var currRotation = this.viewport.getRotation();
-        if (currRotation === 270) {
-            currRotation = 0;
-        }
-        else {
-            currRotation += 90;
-        }
-        this.viewport.setRotation(currRotation);
-    }
-}
-function onPrevious(){
-    var previous = this._sequenceIndex - 1;
-    if(this.navPrevNextWrap && previous < 0){
-        previous += this.tileSources.length;
-    }
-    this.goToPage( previous );
-}
-function onNext(){
-    var next = this._sequenceIndex + 1;
-    if(this.navPrevNextWrap && next >= this.tileSources.length){
-        next = 0;
-    }
-    this.goToPage( next );
 }
 }( OpenSeadragon ));
