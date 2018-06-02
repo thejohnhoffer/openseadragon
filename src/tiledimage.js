@@ -525,17 +525,6 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level,
     var topLeftBound = drawArea.getBoundingBox().getTopLeft();
     var bottomRightBound = drawArea.getBoundingBox().getBottomRight();
 
-    if (tiledImage.viewer) {
-        tiledImage.viewer.raiseEvent('update-level', {
-            tiledImage: tiledImage,
-            level: level,
-            visibility: levelVisibility,
-            drawArea: drawArea,
-            bottomright: bottomRightBound,
-            currenttime: currentTime,
-            best: best
-        });
-    }
     resetCoverage(tiledImage.coverage, level);
     resetCoverage(tiledImage.loadingCoverage, level);
 
@@ -586,12 +575,6 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelVisibil
         ),
         drawTile = drawLevel;
 
-    if( tiledImage.viewer ){
-        tiledImage.viewer.raiseEvent( 'update-tile', {
-            tiledImage: tiledImage,
-            tile: tile
-        });
-    }
     setCoverage( tiledImage.coverage, level, x, y, false );
 
     var loadingCoverage = tile.loaded || tile.loading || isCovered(tiledImage.loadingCoverage, level, x, y);
@@ -746,13 +729,6 @@ function loadTile( tiledImage, tile, time ) {
 function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     if ( !image ) {
 
-        tiledImage.viewer.raiseEvent("tile-load-failed", {
-            tile: tile,
-            tiledImage: tiledImage,
-            time: time,
-            message: errorMsg,
-            tileRequest: tileRequest
-        });
         tile.loading = false;
         tile.exists = false;
         return;
@@ -797,13 +773,6 @@ function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
             tiledImage._needsDraw = true;
         }
     }
-    tiledImage.viewer.raiseEvent("tile-loaded", {
-        tile: tile,
-        tiledImage: tiledImage,
-        tileRequest: tileRequest,
-        image: image,
-        getCompletionCallback: getCompletionCallback
-    });
     // In case the completion callback is never called, we at least force it once.
     getCompletionCallback()();
 }

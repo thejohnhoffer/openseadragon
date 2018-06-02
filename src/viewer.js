@@ -114,10 +114,6 @@ $.Viewer = function( options ) {
             _this.viewport._setContentBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
         }
     });
-    this.world.addHandler('item-index-change', function(event) {
-        // For backwards compatibility, we maintain the source property
-        _this.source = _this.world.getItemAt(0).source;
-    });
     // Create the viewport
     this.viewport = new $.Viewport({
         containerSize: THIS[ this.hash ].prevContainerSize,
@@ -199,8 +195,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                         source = source.tileSource;
                     }
                     _this._opening = false;
-                    // TODO: what if there are multiple sources?
-                    _this.raiseEvent( 'open', { source: source } );
                 } else {
                     _this._opening = false;
                     _this.raiseEvent( 'open-failed', failEvent );
@@ -215,9 +209,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             }
             if (options.index !== undefined) {
                 delete options.index;
-            }
-            if (options.collectionImmediately === undefined) {
-                options.collectionImmediately = true;
             }
             var originalSuccess = options.success;
             options.success = function(event) {
@@ -258,7 +249,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
         this.imageLoader.clear();
-        this.raiseEvent( 'close' );
 
         return this;
     },
@@ -328,7 +318,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             if (_this._loadQueue.length === 0) {
                 refreshWorld(myQueueItem);
             }
-            _this.raiseEvent( 'add-item-failed', event );
 
             if (options.error) {
                 options.error(event);
@@ -337,7 +326,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         function refreshWorld(theItem) {
             if (_this.collectionMode) {
                 _this.world.arrange({
-                    immediately: theItem.options.collectionImmediately,
                     rows: _this.collectionRows,
                     columns: _this.collectionColumns,
                     tileSize: _this.collectionTileSize,
@@ -551,22 +539,10 @@ function updateOnce( viewer ) {
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;
 
-    if (viewportChange) {
-        viewer.raiseEvent('viewport-change');
-    }
-    if ( !THIS[ viewer.hash ].animating && animated ) {
-        viewer.raiseEvent( "animation-start" );
-    }
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
         THIS[ viewer.hash ].forceRedraw = false;
 
-        if (animated) {
-            viewer.raiseEvent( "animation" );
-        }
-    }
-    if ( THIS[ viewer.hash ].animating && !animated ) {
-        viewer.raiseEvent( "animation-finish" );
     }
     THIS[ viewer.hash ].animating = animated;
 
@@ -576,7 +552,6 @@ function drawWorld( viewer ) {
     viewer.imageLoader.clear();
     viewer.drawer.clear();
     viewer.world.draw();
-    viewer.raiseEvent( 'update-viewport', {} );
 }
 ///////////////////////////////////////////////////////////////////////////////
 // Navigation

@@ -78,13 +78,6 @@ $.Viewport.prototype = {
         this._contentSize = this._contentBounds.getSize().times(contentFactor);
         this._contentAspectRatio = this._contentSize.x / this._contentSize.y;
 
-        if (this.viewer) {
-            this.viewer.raiseEvent('reset-size', {
-                contentSize: this._contentSize.clone(),
-                contentFactor: contentFactor,
-                contentBounds: this._contentBounds.clone()
-            });
-        }
     },
     getHomeZoom: function() {
         if (this.defaultZoomLevel) {
@@ -354,13 +347,6 @@ $.Viewport.prototype = {
         } else {
             this.zoomSpring.springTo(zoom);
         }
-        if (this.viewer) {
-            this.viewer.raiseEvent('zoom', {
-                zoom: zoom,
-                refPoint: refPoint,
-                immediately: immediately
-            });
-        }
         return this;
     },
     resize: function( newContainerSize, maintain ) {
@@ -378,12 +364,6 @@ $.Viewport.prototype = {
             widthDeltaFactor = newContainerSize.x / this.containerSize.x;
             newBounds.width = oldBounds.width * widthDeltaFactor;
             newBounds.height = newBounds.width / this.getAspectRatio();
-        }
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'resize', {
-                newContainerSize: newContainerSize,
-                maintain: maintain
-            });
         }
         return this.fitBounds( newBounds, true );
     },

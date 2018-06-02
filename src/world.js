@@ -129,7 +129,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
     },
     arrange: function(options) {
         options = options || {};
-        var immediately = options.immediately || false;
         var rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
         var columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
         var tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
@@ -162,8 +161,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
             position = new $.Point(x + ((tileSize - width) / 2),
                 y + ((tileSize - height) / 2));
 
-            item.setPosition(position, immediately);
-            item.setWidth(width, immediately);
+            item.setPosition(position, true);
+            item.setWidth(width, true);
 
             x += increment;
         }
