@@ -53,26 +53,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
     getItemCount: function() {
         return this._items.length;
     },
-    setItemIndex: function( item, index ) {
-
-        var oldIndex = this.getIndexOfItem( item );
-
-        if ( index >= this._items.length ) {
-            throw new Error( "Index bigger than number of layers." );
-        }
-        if ( index === oldIndex || oldIndex === -1 ) {
-            return;
-        }
-        this._items.splice( oldIndex, 1 );
-        this._items.splice( index, 0, item );
-        this._needsDraw = true;
-
-        this.raiseEvent( 'item-index-change', {
-            item: item,
-            previousIndex: oldIndex,
-            newIndex: index
-        } );
-    },
     removeItem: function( item ) {
 
         var index = $.indexOf(this._items, item );

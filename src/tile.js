@@ -59,39 +59,7 @@ $.Tile.prototype = {
     _hasTransparencyChannel: function() {
         return !!this.context2D || this.url.match('.png');
     },
-    drawHTML: function( container ) {
-        if (!this.cacheImageRecord) {
-            return;
-        }
-        if ( !this.loaded ) {
-            return;
-        }
-        //EXPERIMENTAL - trying to figure out how to scale the container
-        // content during animation of the container size.
-
-        if ( !this.element ) {
-            this.element = $.makeNeutralElement( "div" );
-            this.imgElement = this.cacheImageRecord.getImage().cloneNode();
-            this.imgElement.style.msInterpolationMode = "nearest-neighbor";
-            this.imgElement.style.width = "100%";
-            this.imgElement.style.height = "100%";
-
-            this.style = this.element.style;
-            this.style.position = "absolute";
-        }
-        if ( this.element.parentNode != container ) {
-            container.appendChild( this.element );
-        }
-        if ( this.imgElement.parentNode != this.element ) {
-            this.element.appendChild( this.imgElement );
-        }
-        this.style.top = this.position.y + "px";
-        this.style.left = this.position.x + "px";
-        this.style.height = this.size.y + "px";
-        this.style.width = this.size.x + "px";
-
-    },
-    drawCanvas: function( context, drawingHandler, scale, translate ) {
+    drawCanvas: function( context, scale, translate ) {
         var position = this.position.times($.pixelDensityRatio),
             size = this.size.times($.pixelDensityRatio),
             rendered;
@@ -130,9 +98,6 @@ $.Tile.prototype = {
                 size.y - 2
             );
         }
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, tile: this, rendered: rendered});
         var sourceWidth, sourceHeight;
         if (this.sourceBounds) {
             sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);

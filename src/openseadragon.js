@@ -55,14 +55,8 @@ function OpenSeadragon( options ){
         return lastKey === undefined || hasOwn.call( obj, lastKey );
     };
     $.pixelDensityRatio = (function () {
-        var context = document.createElement('canvas').getContext('2d');
         var devicePixelRatio = window.devicePixelRatio || 1;
-        var backingStoreRatio = context.webkitBackingStorePixelRatio ||
-                                context.mozBackingStorePixelRatio ||
-                                context.msBackingStorePixelRatio ||
-                                context.oBackingStorePixelRatio ||
-                                context.backingStorePixelRatio || 1;
-        return Math.max(devicePixelRatio, 1) / backingStoreRatio;
+        return Math.max(devicePixelRatio, 1);
     }());
 }( OpenSeadragon ));
 (function( $ ){
@@ -199,21 +193,6 @@ function OpenSeadragon( options ){
             }
             return result;
         },
-        getElementSize: function( element ) {
-            element = $.getElement( element );
-
-            return new $.Point(
-                element.clientWidth,
-                element.clientHeight
-            );
-        },
-        positiveModulo: function(number, modulo) {
-            var result = number % modulo;
-            if (result < 0) {
-                result += modulo;
-            }
-            return result;
-        },
         getPageScroll: function() {
             $.getPageScroll = function(){
                 return new $.Point(
@@ -259,6 +238,14 @@ function OpenSeadragon( options ){
                 return array.indexOf( searchElement, fromIndex );
             };
             return this.indexOf( array, searchElement, fromIndex );
+        },
+        getUrlProtocol: function( url ) {
+            var match = url.match(/^([a-z]+:)\/\//i);
+            if ( match === null ) {
+                // Relative URL, retrive the protocol from window.location
+                return window.location.protocol;
+            }
+            return match[1].toLowerCase();
         },
         createAjaxRequest: function( local ) {
             $.createAjaxRequest = function() {

@@ -2,8 +2,6 @@
 
 (function( $ ){
 $.TiledImage = function( options ) {
-    var _this = this;
-
 
     $.EventSource.call( this );
 
@@ -62,7 +60,6 @@ $.TiledImage = function( options ) {
         minZoomImageRatio: $.DEFAULT_SETTINGS.minZoomImageRatio,
         minPixelRatio: $.DEFAULT_SETTINGS.minPixelRatio,
         smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
-        iOSDevice: $.DEFAULT_SETTINGS.iOSDevice,
         ajaxWithCredentials: $.DEFAULT_SETTINGS.ajaxWithCredentials,
     }, options );
 
@@ -85,19 +82,10 @@ $.TiledImage = function( options ) {
     });
     this._updateForScale();
 
-    // We need a callback to give image manipulation a chance to happen
-    this._drawingHandler = function(args) {
-        _this.viewer.raiseEvent('tile-drawing', $.extend({
-            tiledImage: _this
-        }, args));
-    };
 };
 $.extend($.TiledImage.prototype, $.EventSource.prototype, {
     needsDraw: function() {
         return this._needsDraw;
-    },
-    getFullyLoaded: function() {
-        return this._fullyLoaded;
     },
     // private
     _setFullyLoaded: function(flag) {
@@ -105,9 +93,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             return;
         }
         this._fullyLoaded = flag;
-        this.raiseEvent('fully-loaded-change', {
-            fullyLoaded: this._fullyLoaded
-        });
     },
     reset: function() {
         this._tileCache.clearTilesFor(this);
@@ -146,10 +131,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
                 this._ySpring.target.value,
                 this._worldWidthTarget,
                 this._worldHeightTarget);
-    },
-    // deprecated
-    getWorldBounds: function() {
-        return this.getBounds();
     },
     getClippedBounds: function(current) {
         var bounds = this.getBounds(current);
@@ -356,12 +337,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             this.setWidth(width, immediately);
         }
     },
-    getClip: function() {
-        if (this._clip) {
-            return this._clip.clone();
-        }
-        return null;
-    },
     setClip: function(newClip) {
 
         if (newClip instanceof $.Rect) {
@@ -553,11 +528,9 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level,
     if (tiledImage.viewer) {
         tiledImage.viewer.raiseEvent('update-level', {
             tiledImage: tiledImage,
-            havedrawn: haveDrawn,
             level: level,
             visibility: levelVisibility,
             drawArea: drawArea,
-            topleft: topLeftBound,
             bottomright: bottomRightBound,
             currenttime: currentTime,
             best: best
@@ -956,12 +929,9 @@ function drawTiles( tiledImage, lastDrawn ) {
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
 
     if (lastDrawn.length > 1 &&
-        imageZoom > tiledImage.smoothTileEdgesMinZoom &&
-        !tiledImage.iOSDevice &&
-        tiledImage.getRotation(true) % 360 === 0) {
+        imageZoom > tiledImage.smoothTileEdgesMinZoom) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
-        // Note: Disabled on iOS devices per default as it causes a native crash
         useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
@@ -998,15 +968,9 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
+        tiledImage._drawer.drawTile( tile, useSketch, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
-        if( tiledImage.viewer ){
-            tiledImage.viewer.raiseEvent( 'tile-drawn', {
-                tiledImage: tiledImage,
-                tile: tile
-            });
-        }
     }
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );

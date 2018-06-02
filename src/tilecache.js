@@ -33,9 +33,6 @@ ImageRecord.prototype = {
         }
         return this._renderedContext;
     },
-    setRenderedContext: function(renderedContext) {
-        this._renderedContext = renderedContext;
-    },
     addTile: function(tile) {
         this._tiles.push(tile);
     },
@@ -137,7 +134,6 @@ $.TileCache.prototype = {
     // private
     _unloadTile: function(tileRecord) {
         var tile = tileRecord.tile;
-        var tiledImage = tileRecord.tiledImage;
 
         tile.unload();
         tile.cacheImageRecord = null;
@@ -149,10 +145,6 @@ $.TileCache.prototype = {
             delete this._imagesLoaded[tile.cacheKey];
             this._imagesLoadedCount--;
         }
-        tiledImage.viewer.raiseEvent("tile-unloaded", {
-            tile: tile,
-            tiledImage: tiledImage
-        });
     }
 };
 }( OpenSeadragon ));

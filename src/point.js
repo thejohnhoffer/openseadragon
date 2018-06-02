@@ -34,9 +34,6 @@ $.Point.prototype = {
             this.y / factor
         );
     },
-    negate: function() {
-        return new $.Point( -this.x, -this.y );
-    },
     distanceTo: function( point ) {
         return Math.sqrt(
             Math.pow( this.x - point.x, 2 ) +

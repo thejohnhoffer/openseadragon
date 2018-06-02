@@ -44,12 +44,7 @@ ImageJob.prototype = {
                     self.image._array = request.response;
                     blb = new window.Blob([request.response]);
                 } catch (e) {
-                    var BlobBuilder = (
-                        window.BlobBuilder ||
-                        window.WebKitBlobBuilder ||
-                        window.MozBlobBuilder ||
-                        window.MSBlobBuilder
-                    );
+                    var BlobBuilder = window.BlobBuilder;
                     if (e.name === 'TypeError' && BlobBuilder) {
                         var bb = new BlobBuilder();
                         bb.append(request.response);
@@ -63,7 +58,7 @@ ImageJob.prototype = {
                 }
                 // Create a URL for the blob data and make it the source of the image object.
                 // This will still trigger Image.onload to indicate a successful tile load.
-                var url = (window.URL || window.webkitURL).createObjectURL(blb);
+                var url = window.URL.createObjectURL(blb);
                 self.image.src = url;
             },
             error: function(request) {

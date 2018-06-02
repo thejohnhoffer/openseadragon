@@ -19,13 +19,6 @@ $.Viewport = function( options ) {
         $.extend( true, options, options.config );
         delete options.config;
     }
-    this._margins = $.extend({
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0
-    }, options.margins || {});
-    delete options.margins;
 
     $.extend( true, this, {
         //required settings
@@ -60,7 +53,6 @@ $.Viewport = function( options ) {
         animationTime: this.animationTime
     });
     this.zoomSpring = new $.Spring({
-        exponential: true,
         initial: 1,
         springStiffness: this.springStiffness,
         animationTime: this.animationTime
@@ -75,20 +67,6 @@ $.Viewport = function( options ) {
     this.update();
 };
 $.Viewport.prototype = {
-    resetContentSize: function(contentSize) {
-
-        this._setContentBounds(new $.Rect(0, 0, 1, contentSize.y / contentSize.x), contentSize.x);
-        return this;
-    },
-    // deprecated
-    setHomeBounds: function(bounds, contentFactor) {
-        this._setContentBounds(bounds, contentFactor);
-    },
-    // Set the viewport's content bounds
-    // @param {OpenSeadragon.Rect} bounds - the new bounds in viewport coordinates
-    // without rotation
-    // @param {Number} contentFactor - how many content units per viewport unit
-    // @fires OpenSeadragon.Viewer.event:reset-size
     // @private
     _setContentBounds: function(bounds, contentFactor) {
 
@@ -104,7 +82,6 @@ $.Viewport.prototype = {
             this.viewer.raiseEvent('reset-size', {
                 contentSize: this._contentSize.clone(),
                 contentFactor: contentFactor,
-                homeBounds: this._contentBounds.clone(),
                 contentBounds: this._contentBounds.clone()
             });
         }
@@ -130,11 +107,6 @@ $.Viewport.prototype = {
         );
     },
     goHome: function(immediately) {
-        if (this.viewer) {
-            this.viewer.raiseEvent('home', {
-                immediately: immediately
-            });
-        }
         return this.fitBounds(this.getHomeBounds(), immediately);
     },
     getMinZoom: function() {
@@ -162,22 +134,6 @@ $.Viewport.prototype = {
             this.containerSize.y
         );
     },
-    getMargins: function() {
-        return $.extend({}, this._margins); // Make a copy so we are not returning our original
-    },
-    setMargins: function(margins) {
-
-        this._margins = $.extend({
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0
-        }, margins);
-        this._updateContainerInnerSize();
-        if (this.viewer) {
-            this.viewer.forceRedraw();
-        }
-    },
     getBounds: function(current) {
         var center = this.getCenter(current);
         var width = 1.0 / this.getZoom(current);
@@ -192,11 +148,6 @@ $.Viewport.prototype = {
     },
     getBoundsWithMargins: function(current) {
         var bounds = this.getBounds(current);
-        var factor = this._containerInnerSize.x * this.getZoom(current);
-        bounds.x -= this._margins.left / factor;
-        bounds.y -= this._margins.top / factor;
-        bounds.width += (this._margins.left + this._margins.right) / factor;
-        bounds.height += (this._margins.top + this._margins.bottom) / factor;
         return bounds;
     },
     getCenter: function( current ) {
@@ -290,13 +241,6 @@ $.Viewport.prototype = {
 
         return newBounds;
     },
-    _raiseConstraintsEvent: function(immediately) {
-        if (this.viewer) {
-            this.viewer.raiseEvent( 'constrain', {
-                immediately: immediately
-            });
-        }
-    },
     applyConstraints: function(immediately) {
         var actualZoom = this.getZoom();
         var constrainedZoom = this._applyZoomConstraints(actualZoom);
@@ -306,7 +250,6 @@ $.Viewport.prototype = {
         }
         var bounds = this.getBounds();
         var constrainedBounds = this._applyBoundaryConstraints(bounds);
-        this._raiseConstraintsEvent(immediately);
 
         if (bounds.x !== constrainedBounds.x ||
             bounds.y !== constrainedBounds.y ||
@@ -314,9 +257,6 @@ $.Viewport.prototype = {
             this.fitBounds(constrainedBounds, immediately);
         }
         return this;
-    },
-    ensureVisible: function(immediately) {
-        return this.applyConstraints(immediately);
     },
     _fitBounds: function(bounds, options) {
         options = options || {};
@@ -357,7 +297,6 @@ $.Viewport.prototype = {
             }
             newBounds = this._applyBoundaryConstraints(newBounds);
             center = newBounds.getCenter();
-            this._raiseConstraintsEvent(immediately);
         }
         if (immediately) {
             this.panTo(center, true);
@@ -385,45 +324,6 @@ $.Viewport.prototype = {
             constraints: false
         });
     },
-    fitBoundsWithConstraints: function(bounds, immediately) {
-        return this._fitBounds(bounds, {
-            immediately: immediately,
-            constraints: true
-        });
-    },
-    fitVertically: function(immediately) {
-        var box = new $.Rect(
-            this._contentBounds.x + (this._contentBounds.width / 2),
-            this._contentBounds.y,
-            0,
-            this._contentBounds.height);
-        return this.fitBounds(box, immediately);
-    },
-    fitHorizontally: function(immediately) {
-        var box = new $.Rect(
-            this._contentBounds.x,
-            this._contentBounds.y + (this._contentBounds.height / 2),
-            this._contentBounds.width,
-            0);
-        return this.fitBounds(box, immediately);
-    },
-    getConstrainedBounds: function(current) {
-        var bounds,
-            constrainedBounds;
-
-        bounds = this.getBounds(current);
-
-        constrainedBounds = this._applyBoundaryConstraints(bounds);
-
-        return constrainedBounds;
-    },
-    panBy: function( delta, immediately ) {
-        var center = new $.Point(
-            this.centerSpringX.target.value,
-            this.centerSpringY.target.value
-        );
-        return this.panTo( center.plus( delta ), immediately );
-    },
     panTo: function( center, immediately ) {
         if ( immediately ) {
             this.centerSpringX.resetTo( center.x );
@@ -431,12 +331,6 @@ $.Viewport.prototype = {
         } else {
             this.centerSpringX.springTo( center.x );
             this.centerSpringY.springTo( center.y );
-        }
-        if( this.viewer ){
-            this.viewer.raiseEvent( 'pan', {
-                center: center,
-                immediately: immediately
-            });
         }
         return this;
     },
@@ -496,8 +390,8 @@ $.Viewport.prototype = {
     // private
     _updateContainerInnerSize: function() {
         this._containerInnerSize = new $.Point(
-            Math.max(1, this.containerSize.x - (this._margins.left + this._margins.right)),
-            Math.max(1, this.containerSize.y - (this._margins.top + this._margins.bottom))
+            Math.max(1, this.containerSize.x),
+            Math.max(1, this.containerSize.y)
         );
     },
     update: function() {
@@ -557,15 +451,11 @@ $.Viewport.prototype = {
             bounds.getTopLeft()
         ).times(
             this._containerInnerSize.x / bounds.width
-        ).plus(
-            new $.Point(this._margins.left, this._margins.top)
         );
     },
     pointFromPixel: function(pixel, current) {
         var bounds = this.getBounds(current);
-        return pixel.minus(
-            new $.Point(this._margins.left, this._margins.top)
-        ).divide(
+        return pixel.divide(
             this._containerInnerSize.x / bounds.width
         ).plus(
             bounds.getTopLeft()
@@ -670,35 +560,12 @@ $.Viewport.prototype = {
         return viewerCoordinates.plus(
                 $.getElementPosition(this.viewer.element));
     },
-    viewerElementToViewportCoordinates: function( pixel ) {
-        return this.pointFromPixel( pixel, true );
-    },
-    viewportToViewerElementCoordinates: function( point ) {
-        return this.pixelFromPoint( point, true );
-    },
-    viewerElementToViewportRectangle: function(rectangle) {
-        return $.Rect.fromSummits(
-            this.pointFromPixel(rectangle.getTopLeft(), true),
-            this.pointFromPixel(rectangle.getTopRight(), true),
-            this.pointFromPixel(rectangle.getBottomLeft(), true)
-        );
-    },
     viewportToViewerElementRectangle: function(rectangle) {
         return $.Rect.fromSummits(
             this.pixelFromPoint(rectangle.getTopLeft(), true),
             this.pixelFromPoint(rectangle.getTopRight(), true),
             this.pixelFromPoint(rectangle.getBottomLeft(), true)
         );
-    },
-    windowToViewportCoordinates: function(pixel) {
-        var viewerCoordinates = pixel.minus(
-                $.getElementPosition(this.viewer.element));
-        return this.viewerElementToViewportCoordinates(viewerCoordinates);
-    },
-    viewportToWindowCoordinates: function(point) {
-        var viewerCoordinates = this.viewportToViewerElementCoordinates(point);
-        return viewerCoordinates.plus(
-                $.getElementPosition(this.viewer.element));
     },
     viewportToImageZoom: function(viewportZoom) {
         if (this.viewer) {

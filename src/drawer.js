@@ -102,11 +102,11 @@ $.Drawer.prototype = {
             size.y * $.pixelDensityRatio
         );
     },
-    drawTile: function(tile, drawingHandler, useSketch, scale, translate) {
+    drawTile: function(tile, useSketch, scale, translate) {
 
         var context = this._getContext(useSketch);
         scale = scale || 1;
-        tile.drawCanvas(context, drawingHandler, scale, translate);
+        tile.drawCanvas(context, scale, translate);
     },
     _getContext: function( useSketch ) {
         var context = this.context;
@@ -136,14 +136,6 @@ $.Drawer.prototype = {
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();
-    },
-    // private
-    drawRectangle: function(rect, fillStyle, useSketch) {
-        var context = this._getContext( useSketch );
-        context.save();
-        context.fillStyle = fillStyle;
-        context.fillRect(rect.x, rect.y, rect.width, rect.height);
-        context.restore();
     },
     blendSketch: function(options) {
         var bounds = options.bounds;
@@ -209,26 +201,6 @@ $.Drawer.prototype = {
     getCanvasSize: function(sketch) {
         var canvas = this._getContext(sketch).canvas;
         return new $.Point(canvas.width, canvas.height);
-    },
-    getCanvasCenter: function() {
-        return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
-    },
-    // private
-    _offsetForRotation: function(options) {
-        var point = options.point ?
-            options.point.times($.pixelDensityRatio) :
-            this.getCanvasCenter();
-
-        var context = this._getContext(options.useSketch);
-        context.save();
-
-        context.translate(point.x, point.y);
-        context.translate(-point.x, -point.y);
-    },
-    // private
-    _restoreRotationChanges: function(useSketch) {
-        var context = this._getContext(useSketch);
-        context.restore();
     },
     // private
     _calculateCanvasSize: function() {

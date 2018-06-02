@@ -6,19 +6,6 @@ $.EventSource = function() {
 };
 $.EventSource.prototype = {
 
-    addOnceHandler: function(eventName, handler, userData, times) {
-        var self = this;
-        times = times || 1;
-        var count = 0;
-        var onceHandler = function(event) {
-            count++;
-            if (count === times) {
-                self.removeHandler(eventName, onceHandler);
-            }
-            handler(event);
-        };
-        this.addHandler(eventName, onceHandler, userData);
-    },
     addHandler: function ( eventName, handler, userData ) {
         var events = this.events[ eventName ];
         if ( !events ) {

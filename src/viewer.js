@@ -24,9 +24,6 @@ $.Viewer = function( options ) {
 
         canvas: null,
 
-        //private state properties
-        previousBody: [],
-
         //These are originally not part options but declared as members
         //in initialize. It's still considered idiomatic to put them here
         source: null,
@@ -35,12 +32,6 @@ $.Viewer = function( options ) {
         world: null,
 
         viewport: null,
-
-
-        //A collection viewport is a separate viewport used to provide
-        //simultaneous rendering of sets of tiles
-        collectionViewport: null,
-        collectionDrawer: null,
 
     }, $.DEFAULT_SETTINGS, options );
     if ( typeof ( this.hash) === "undefined" ) {
@@ -93,13 +84,6 @@ $.Viewer = function( options ) {
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
 
-    //TODO: these can be closure private and shared across Viewer
-    // instances.
-    this.bodyWidth = document.body.style.width;
-    this.bodyHeight = document.body.style.height;
-    this.bodyOverflow = document.body.style.overflow;
-    this.docOverflow = document.documentElement.style.overflow;
-
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
     // Create the world
@@ -145,8 +129,7 @@ $.Viewer = function( options ) {
         defaultZoomLevel: this.defaultZoomLevel,
         minZoomLevel: this.minZoomLevel,
         maxZoomLevel: this.maxZoomLevel,
-        viewer: this,
-        margins: this.viewportMargins
+        viewer: this
     });
     this.viewport._setContentBounds(this.world.getHomeBounds(), this.world.getContentFactor());
 
@@ -184,7 +167,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         if (!tileSources) {
             return;
         }
-        if (this.sequenceMode && $.isArray(tileSources)) {
+        if ($.isArray(tileSources)) {
             this.tileSources = tileSources;
             this._sequenceIndex = 0;
             if (this.tileSources.length) {
@@ -313,15 +296,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
     },
-    isVisible: function () {
-        return this.container.style.visibility != "hidden";
-    },
-    setVisible: function( visible ){
-        this.container.style.visibility = visible ? "" : "hidden";
-
-        this.raiseEvent( 'visible', { visible: visible } );
-        return this;
-    },
     addTiledImage: function( options ) {
 
         var _this = this;
@@ -418,7 +392,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     minZoomImageRatio: _this.minZoomImageRatio,
                     minPixelRatio: _this.minPixelRatio,
                     smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
-                    iOSDevice: _this.iOSDevice,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     makeAjaxRequest: queueItem.options.makeAjaxRequest,
                     ajaxHeaders: queueItem.options.ajaxHeaders
@@ -441,7 +414,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                 }
             }
         }
-        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
+        getTileSourceImplementation( this, options.tileSource, function( tileSource ) {
             myQueueItem.tileSource = tileSource;
 
             // add everybody at the front of the queue that's ready to go
@@ -454,32 +427,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             processReadyItems();
         } );
     },
-    addSimpleImage: function(options) {
-
-        var opts = $.extend({}, options, {
-            tileSource: {
-                type: 'image',
-                url: options.url
-            }
-        });
-        delete opts.url;
-        this.addTiledImage(opts);
-    },
     forceRedraw: function() {
         THIS[ this.hash ].forceRedraw = true;
-        return this;
-    },
-    currentPage: function() {
-        return this._sequenceIndex;
-    },
-    goToPage: function( page ){
-        if( this.tileSources && page >= 0 && page < this.tileSources.length ){
-            this._sequenceIndex = page;
-
-            this.open( this.tileSources[ page ] );
-
-            this.raiseEvent( 'page', { page: page } );
-        }
         return this;
     },
     _cancelPendingImages: function() {
@@ -494,7 +443,7 @@ function _getSafeElemSize (oElement) {
         (oElement.clientHeight === 0 ? 1 : oElement.clientHeight)
     );
 }
-function getTileSourceImplementation( viewer, tileSource, imgOptions, successCallback,
+function getTileSourceImplementation( viewer, tileSource, successCallback,
     failCallback ) {
     var _this = viewer;
 
