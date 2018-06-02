@@ -280,7 +280,6 @@ function OpenSeadragon( options ){
             showSequenceControl: true, //SEQUENCE
             sequenceControlAnchor: null, //SEQUENCE
             preserveViewport: false, //SEQUENCE
-            preserveOverlays: false, //SEQUENCE
             navPrevNextWrap: false, //SEQUENCE
             showNavigationControl: true, //ZOOM/HOME/FULL/ROTATION
             navigationControlAnchor: null, //ZOOM/HOME/FULL/ROTATION

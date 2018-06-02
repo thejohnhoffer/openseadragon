@@ -50,10 +50,6 @@ $.TiledImage = function( options ) {
         scale = options.height / this.normHeight;
         delete options.height;
     }
-    var fitBounds = options.fitBounds;
-    delete options.fitBounds;
-    var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
-    delete options.fitBoundsPlacement;
 
     var degrees = options.degrees || 0;
     delete options.degrees;
@@ -117,9 +113,6 @@ $.TiledImage = function( options ) {
     });
     this._updateForScale();
 
-    if (fitBounds) {
-        this.fitBounds(fitBounds, fitBoundsPlacement, true);
-    }
     // We need a callback to give image manipulation a chance to happen
     this._drawingHandler = function(args) {
         _this.viewer.raiseEvent('tile-drawing', $.extend({
@@ -373,8 +366,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         this._setScale(height / this.normHeight, immediately);
     },
     fitBounds: function(bounds, anchor, immediately) {
-        anchor = anchor || $.Placement.CENTER;
-        var anchorProperties = $.Placement.properties[anchor];
         var aspectRatio = this.contentAspectX;
         var xOffset = 0;
         var yOffset = 0;
@@ -396,11 +387,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             // We will have margins on the X axis
             var height = bounds.height / displayedHeightRatio;
             var marginLeft = 0;
-            if (anchorProperties.isHorizontallyCentered) {
-                marginLeft = (bounds.width - bounds.height * aspectRatio) / 2;
-            } else if (anchorProperties.isRight) {
-                marginLeft = bounds.width - bounds.height * aspectRatio;
-            }
             this.setPosition(
                 new $.Point(bounds.x - xOffset + marginLeft, bounds.y - yOffset),
                 immediately);
@@ -409,11 +395,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             // We will have margins on the Y axis
             var width = bounds.width / displayedWidthRatio;
             var marginTop = 0;
-            if (anchorProperties.isVerticallyCentered) {
-                marginTop = (bounds.height - bounds.width / aspectRatio) / 2;
-            } else if (anchorProperties.isBottom) {
-                marginTop = bounds.height - bounds.width / aspectRatio;
-            }
             this.setPosition(
                 new $.Point(bounds.x - xOffset, bounds.y - yOffset + marginTop),
                 immediately);

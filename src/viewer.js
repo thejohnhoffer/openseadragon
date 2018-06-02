@@ -17,8 +17,7 @@ $.Viewer = function( options ) {
             id: args[ 0 ],
             xmlPath: args.length > 1 ? args[ 1 ] : undefined,
             prefixUrl: args.length > 2 ? args[ 2 ] : undefined,
-            controls: args.length > 3 ? args[ 3 ] : undefined,
-            overlays: args.length > 4 ? args[ 4 ] : undefined
+            controls: args.length > 3 ? args[ 3 ] : undefined
         };
     }
     //options.config and the general config argument are deprecated
@@ -44,11 +43,6 @@ $.Viewer = function( options ) {
         container: null,
 
         canvas: null,
-
-        // Overlays list. An overlay allows to add html on top of the viewer.
-        overlays: [],
-        // Container inside the canvas where overlays are drawn.
-        overlaysContainer: null,
 
         //private state properties
         previousBody: [],
@@ -113,7 +107,6 @@ $.Viewer = function( options ) {
     this._firstOpen = true;
     this._updateRequestId = null;
     this._loadQueue = [];
-    this.currentOverlays = [];
 
     this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
@@ -245,9 +238,6 @@ $.Viewer = function( options ) {
         element: this.canvas,
         debugGridColor: this.debugGridColor
     });
-    // Overlay container
-    this.overlaysContainer = $.makeNeutralElement( "div" );
-    this.canvas.appendChild( this.overlaysContainer );
 
     //Instantiate a navigator if configured
     if ( this.showNavigator){
@@ -348,13 +338,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     if (source.tileSource) {
                         source = source.tileSource;
                     }
-                    // Global overlays
-                    if( _this.overlays && !_this.preserveOverlays ){
-                        for ( var i = 0; i < _this.overlays.length; i++ ) {
-                            _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
-                        }
-                    }
-                    _this._drawOverlays();
                     _this._opening = false;
                     // TODO: what if there are multiple sources?
                     _this.raiseEvent( 'open', { source: source } );
@@ -381,13 +364,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.success = function(event) {
                 successes++;
 
-                // TODO: now that options has other things besides tileSource, the overlays
-                // should probably be at the options level, not the tileSource level.
-                if (options.tileSource.overlays) {
-                    for (var i = 0; i < options.tileSource.overlays.length; i++) {
-                        _this.addOverlay(options.tileSource.overlays[i]);
-                    }
-                }
                 if (originalSuccess) {
                     originalSuccess(event);
                 }
@@ -423,10 +399,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if ( this.navigator ) {
             this.navigator.close();
         }
-        if (!this.preserveOverlays) {
-            this.clearOverlays();
-            this.overlaysContainer.innerHTML = "";
-        }
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
         this.imageLoader.clear();
@@ -441,8 +413,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         this.close();
 
-        this.clearOverlays();
-        this.overlaysContainer.innerHTML = "";
 
         //TODO: implement this...
         //this.unbindSequenceControls()
@@ -851,7 +821,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width: queueItem.options.width,
                     height: queueItem.options.height,
                     fitBounds: queueItem.options.fitBounds,
-                    fitBoundsPlacement: queueItem.options.fitBoundsPlacement,
                     clip: queueItem.options.clip,
                     placeholderFillStyle: queueItem.options.placeholderFillStyle,
                     opacity: queueItem.options.opacity,
@@ -1005,90 +974,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
         return this;
     },
-    addOverlay: function( element, location, placement, onDraw ) {
-        var options;
-        if( $.isPlainObject( element ) ){
-            options = element;
-        } else {
-            options = {
-                element: element,
-                location: location,
-                placement: placement,
-                onDraw: onDraw
-            };
-        }
-        element = $.getElement( options.element );
-
-        if ( getOverlayIndex( this.currentOverlays, element ) >= 0 ) {
-            // they're trying to add a duplicate overlay
-            return this;
-        }
-        var overlay = getOverlayObject( this, options);
-        this.currentOverlays.push(overlay);
-        overlay.drawHTML( this.overlaysContainer, this.viewport );
-        this.raiseEvent( 'add-overlay', {
-            element: element,
-            location: options.location,
-            placement: options.placement
-        });
-        return this;
-    },
-    updateOverlay: function( element, location, placement ) {
-        var i;
-
-        element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
-
-        if ( i >= 0 ) {
-            this.currentOverlays[ i ].update( location, placement );
-            THIS[ this.hash ].forceRedraw = true;
-
-            this.raiseEvent( 'update-overlay', {
-                element: element,
-                location: location,
-                placement: placement
-            });
-        }
-        return this;
-    },
-    removeOverlay: function( element ) {
-        var i;
-
-        element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
-
-        if ( i >= 0 ) {
-            this.currentOverlays[ i ].destroy();
-            this.currentOverlays.splice( i, 1 );
-            THIS[ this.hash ].forceRedraw = true;
-
-            this.raiseEvent( 'remove-overlay', {
-                element: element
-            });
-        }
-        return this;
-    },
-    clearOverlays: function() {
-        while ( this.currentOverlays.length > 0 ) {
-            this.currentOverlays.pop().destroy();
-        }
-        THIS[ this.hash ].forceRedraw = true;
-
-        this.raiseEvent( 'clear-overlay', {} );
-        return this;
-    },
-    getOverlayById: function( element ) {
-        var i;
-
-        element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
-
-        if (i >= 0) {
-            return this.currentOverlays[i];
-        } else {
-            return null;
-        }
-    },
     _showMessage: function ( message ) {
         this._hideMessage();
 
@@ -1118,14 +1003,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 return this.gestureSettingsPen;
             default:
                 return this.gestureSettingsUnknown;
-        }
-    },
-    // private
-    _drawOverlays: function() {
-        var i,
-            length = this.currentOverlays.length;
-        for ( i = 0; i < length; i++ ) {
-            this.currentOverlays[ i ].drawHTML( this.overlaysContainer, this.viewport );
         }
     },
     _cancelPendingImages: function() {
@@ -1226,72 +1103,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             waitUntilReady(tileSource, tileSource);
         }
     });
-}
-function getOverlayObject( viewer, overlay ) {
-    if ( overlay instanceof $.Overlay ) {
-        return overlay;
-    }
-    var element = null;
-    if ( overlay.element ) {
-        element = $.getElement( overlay.element );
-    } else {
-        var id = overlay.id ?
-            overlay.id :
-            "openseadragon-overlay-" + Math.floor( Math.random() * 10000000 );
-
-        element = $.getElement( overlay.id );
-        if ( !element ) {
-            element = document.createElement( "a" );
-            element.href = "#/overlay/" + id;
-        }
-        element.id = id;
-        $.addClass( element, overlay.className ?
-            overlay.className :
-            "openseadragon-overlay"
-        );
-    }
-    var location = overlay.location;
-    var width = overlay.width;
-    var height = overlay.height;
-    if (!location) {
-        var x = overlay.x;
-        var y = overlay.y;
-        if (overlay.px !== undefined) {
-            var rect = viewer.viewport.imageToViewportRectangle(new $.Rect(
-                overlay.px,
-                overlay.py,
-                width || 0,
-                height || 0));
-            x = rect.x;
-            y = rect.y;
-            width = width !== undefined ? rect.width : undefined;
-            height = height !== undefined ? rect.height : undefined;
-        }
-        location = new $.Point(x, y);
-    }
-    var placement = overlay.placement;
-    if (placement && $.type(placement) === "string") {
-        placement = $.Placement[overlay.placement.toUpperCase()];
-    }
-    return new $.Overlay({
-        element: element,
-        location: location,
-        placement: placement,
-        onDraw: overlay.onDraw,
-        checkResize: overlay.checkResize,
-        width: width,
-        height: height,
-        rotationMode: overlay.rotationMode
-    });
-}
-function getOverlayIndex( overlays, element ) {
-    var i;
-    for ( i = overlays.length - 1; i >= 0; i-- ) {
-        if ( overlays[ i ].element === element ) {
-            return i;
-        }
-    }
-    return -1;
 }
 ///////////////////////////////////////////////////////////////////////////////
 // Schedulers provide the general engine for animation
@@ -1436,7 +1247,6 @@ function updateOnce( viewer ) {
     }
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
-        viewer._drawOverlays();
         if( viewer.navigator ){
             viewer.navigator.update( viewer.viewport );
         }

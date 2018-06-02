@@ -40,7 +40,6 @@ $.Drawer = function( options ) {
 
     // We force our container to ltr because our drawing math doesn't work in rtl.
     // This issue only affects our canvas renderer, but we do it always for consistency.
-    // Note that this means overlays you want to be rtl need to be explicitly set to rtl.
     this.container.dir = 'ltr';
 
     // check canvas available width and height, set canvas width and height such that the canvas backing store is set to the proper pixel density
@@ -59,30 +58,6 @@ $.Drawer = function( options ) {
     this.container.appendChild( this.canvas );
 };
 $.Drawer.prototype = {
-    // deprecated
-    addOverlay: function( element, location, placement, onDraw ) {
-        $.console.error("drawer.addOverlay is deprecated. Use viewer.addOverlay instead.");
-        this.viewer.addOverlay( element, location, placement, onDraw );
-        return this;
-    },
-    // deprecated
-    updateOverlay: function( element, location, placement ) {
-        $.console.error("drawer.updateOverlay is deprecated. Use viewer.updateOverlay instead.");
-        this.viewer.updateOverlay( element, location, placement );
-        return this;
-    },
-    // deprecated
-    removeOverlay: function( element ) {
-        $.console.error("drawer.removeOverlay is deprecated. Use viewer.removeOverlay instead.");
-        this.viewer.removeOverlay( element );
-        return this;
-    },
-    // deprecated
-    clearOverlays: function() {
-        $.console.error("drawer.clearOverlays is deprecated. Use viewer.clearOverlays instead.");
-        this.viewer.clearOverlays();
-        return this;
-    },
     setOpacity: function( opacity ) {
         $.console.error("drawer.setOpacity is deprecated. Use tiledImage.setOpacity instead.");
         var world = this.viewer.world;
