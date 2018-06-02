@@ -236,7 +236,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y,
+            coordB.y
         );
     },
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
@@ -254,7 +254,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y,
+            coordB.y
         );
     },
     viewerElementToImageCoordinates: function( pixel ) {

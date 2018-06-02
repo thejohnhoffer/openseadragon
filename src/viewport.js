@@ -126,9 +126,6 @@ $.Viewport.prototype = {
         return output / this._contentBounds.width;
     },
     getHomeBounds: function() {
-        return this.getHomeBounds();
-    },
-    getHomeBounds: function() {
         var center = this._contentBounds.getCenter();
         var width = 1.0 / this.getHomeZoom();
         var height = width / this.getAspectRatio();
@@ -646,9 +643,9 @@ $.Viewport.prototype = {
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y,
+            coordB.y
         );
-    },
+  },
     viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
         var rect = viewerX;
         if (!(rect instanceof $.Rect)) {
@@ -666,7 +663,7 @@ $.Viewport.prototype = {
             coordA.x,
             coordA.y,
             coordB.x,
-            coordB.y,
+            coordB.y
         );
     },
     viewerElementToImageCoordinates: function( pixel ) {

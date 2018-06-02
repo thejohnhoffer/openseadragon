@@ -53,7 +53,6 @@ $.Viewer = function( options ) {
 
         viewport: null,
 
-        navigator: null,
 
         //A collection viewport is a separate viewport used to provide
         //simultaneous rendering of sets of tiles
@@ -204,23 +203,6 @@ $.Viewer = function( options ) {
         element: this.canvas
     });
 
-    //Instantiate a navigator if configured
-    if ( this.showNavigator){
-        this.navigator = new $.Navigator({
-            id: this.navigatorId,
-            position: this.navigatorPosition,
-            sizeRatio: this.navigatorSizeRatio,
-            maintainSizeRatio: this.navigatorMaintainSizeRatio,
-            top: this.navigatorTop,
-            left: this.navigatorLeft,
-            width: this.navigatorWidth,
-            height: this.navigatorHeight,
-            autoResize: this.navigatorAutoResize,
-            autoFade: this.navigatorAutoFade,
-            viewer: this,
-            crossOriginPolicy: this.crossOriginPolicy
-        });
-    }
     // Open initial tilesources
     if (this.tileSources) {
         this.open( this.tileSources );
@@ -341,9 +323,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         }
         this._opening = false;
 
-        if ( this.navigator ) {
-            this.navigator.close();
-        }
         THIS[ this.hash ].animating = false;
         this.world.removeAll();
         this.imageLoader.clear();
@@ -543,9 +522,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             // mouse will likely be outside now
             $.delegate( this, onContainerExit )( { } );
         }
-        if ( this.navigator && this.viewport ) {
-            this.navigator.update( this.viewport );
-        }
         this.raiseEvent( 'full-page', { fullPage: fullPage } );
         return this;
     },
@@ -662,7 +638,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         this._loadQueue.push(myQueueItem);
 
         function processReadyItems() {
-            var queueItem, tiledImage, optionsClone;
+            var queueItem, tiledImage;
             while (_this._loadQueue.length) {
                 queueItem = _this._loadQueue[0];
                 if (!queueItem.tileSource) {
@@ -720,14 +696,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                 if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
                     _this.viewport.goHome(true);
                 }
-                if (_this.navigator) {
-                    optionsClone = $.extend({}, queueItem.options, {
-                        replace: false, // navigator already removed the layer, nothing to replace
-                        originalTiledImage: tiledImage,
-                        tileSource: queueItem.tileSource
-                    });
-                    _this.navigator.addTiledImage(optionsClone);
-                }
                 if (queueItem.options.success) {
                     queueItem.options.success({
                         item: tiledImage
@@ -759,45 +727,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         delete opts.url;
         this.addTiledImage(opts);
     },
-    // deprecated
-    addLayer: function( options ) {
-        var _this = this;
-
-
-        var optionsClone = $.extend({}, options, {
-            success: function(event) {
-                _this.raiseEvent("add-layer", {
-                    options: options,
-                    drawer: event.item
-                });
-            },
-            error: function(event) {
-                _this.raiseEvent("add-layer-failed", event);
-            }
-        });
-        this.addTiledImage(optionsClone);
-        return this;
-    },
-    // deprecated
-    getLayerAtLevel: function( level ) {
-        return this.world.getItemAt(level);
-    },
-    // deprecated
-    getLevelOfLayer: function( drawer ) {
-        return this.world.getIndexOfItem(drawer);
-    },
-    // deprecated
-    getLayersCount: function() {
-        return this.world.getItemCount();
-    },
-    // deprecated
-    setLayerLevel: function( drawer, level ) {
-        return this.world.setItemIndex(drawer, level);
-    },
-    // deprecated
-    removeLayer: function( drawer ) {
-        return this.world.removeItem(drawer);
-    },
     forceRedraw: function() {
         THIS[ this.hash ].forceRedraw = true;
         return this;
@@ -814,18 +743,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             this.raiseEvent( 'page', { page: page } );
         }
         return this;
-    },
-    gestureSettingsByDeviceType: function ( type ) {
-        switch ( type ) {
-            case 'mouse':
-                return this.gestureSettingsMouse;
-            case 'touch':
-                return this.gestureSettingsTouch;
-            case 'pen':
-                return this.gestureSettingsPen;
-            default:
-                return this.gestureSettingsUnknown;
-        }
     },
     _cancelPendingImages: function() {
         this._loadQueue = [];
@@ -1007,9 +924,6 @@ function updateOnce( viewer ) {
     }
     if ( animated || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
         drawWorld( viewer );
-        if( viewer.navigator ){
-            viewer.navigator.update( viewer.viewport );
-        }
         THIS[ viewer.hash ].forceRedraw = false;
 
         if (animated) {

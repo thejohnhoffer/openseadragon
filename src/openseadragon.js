@@ -172,46 +172,7 @@ function OpenSeadragon( options ){
             dblClickDistThreshold: 20,
             springStiffness: 6.5,
             animationTime: 1.2,
-            gestureSettingsMouse: {
-                scrollToZoom: true,
-                clickToZoom: true,
-                dblClickToZoom: false,
-                pinchToZoom: false,
-                zoomToRefPoint: true,
-                flickEnabled: false,
-                flickMinSpeed: 120,
-                flickMomentum: 0.25,
-            },
-            gestureSettingsTouch: {
-                scrollToZoom: false,
-                clickToZoom: false,
-                dblClickToZoom: true,
-                pinchToZoom: true,
-                zoomToRefPoint: true,
-                flickEnabled: true,
-                flickMinSpeed: 120,
-                flickMomentum: 0.25,
-            },
-            gestureSettingsPen: {
-                scrollToZoom: false,
-                clickToZoom: true,
-                dblClickToZoom: false,
-                pinchToZoom: false,
-                zoomToRefPoint: true,
-                flickEnabled: false,
-                flickMinSpeed: 120,
-                flickMomentum: 0.25,
-            },
-            gestureSettingsUnknown: {
-                scrollToZoom: false,
-                clickToZoom: false,
-                dblClickToZoom: true,
-                pinchToZoom: true,
-                zoomToRefPoint: true,
-                flickEnabled: true,
-                flickMinSpeed: 120,
-                flickMomentum: 0.25,
-            },
+
             zoomPerClick: 2,
             zoomPerScroll: 1.2,
             zoomPerSecond: 1.0,
@@ -230,19 +191,6 @@ function OpenSeadragon( options ){
             preserveViewport: false, //SEQUENCE
             navPrevNextWrap: false, //SEQUENCE
             mouseNavEnabled: true, //GENERAL MOUSE INTERACTIVITY
-
-            //VIEWPORT NAVIGATOR SETTINGS
-            showNavigator: false,
-            navigatorId: null,
-            navigatorPosition: null,
-            navigatorSizeRatio: 0.2,
-            navigatorMaintainSizeRatio: false,
-            navigatorTop: null,
-            navigatorLeft: null,
-            navigatorHeight: null,
-            navigatorWidth: null,
-            navigatorAutoResize: true,
-            navigatorAutoFade: true,
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows: 3, //or columns depending on layout
