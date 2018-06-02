@@ -70,7 +70,6 @@ $.TiledImage = function( options ) {
         minPixelRatio: $.DEFAULT_SETTINGS.minPixelRatio,
         smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice: $.DEFAULT_SETTINGS.iOSDevice,
-        debugMode: $.DEFAULT_SETTINGS.debugMode,
         crossOriginPolicy: $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials: $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle: $.DEFAULT_SETTINGS.placeholderFillStyle,
@@ -1240,16 +1239,6 @@ function drawTiles( tiledImage, lastDrawn ) {
             if (tiledImage.viewport.degrees !== 0) {
                 tiledImage._drawer._restoreRotationChanges(false);
             }
-        }
-    }
-    drawDebugInfo( tiledImage, lastDrawn );
-}
-function drawDebugInfo( tiledImage, lastDrawn ) {
-    if( tiledImage.debugMode ) {
-        for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
-            var tile = lastDrawn[ i ];
-            tiledImage._drawer.drawDebugInfo(
-                tile, lastDrawn.length, i, tiledImage);
         }
     }
 }

@@ -327,9 +327,6 @@ function OpenSeadragon( options ){
                     DOWN: 'next_pressed.png'
                 }
             },
-            //DEVELOPER SETTINGS
-            debugMode: false,
-            debugGridColor: ['#437AB2', '#1B9E77', '#D95F02', '#7570B3', '#E7298A', '#66A61E', '#E6AB02', '#A6761D', '#666666']
         },
         delegate: function( object, method ) {
             return function(){

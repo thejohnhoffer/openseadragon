@@ -211,8 +211,7 @@ $.Viewer = function( options ) {
     this.drawer = new $.Drawer({
         viewer: this,
         viewport: this.viewport,
-        element: this.canvas,
-        debugGridColor: this.debugGridColor
+        element: this.canvas
     });
 
     //Instantiate a navigator if configured
@@ -403,13 +402,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     },
     setMouseNavEnabled: function( enabled ){
         return this;
-    },
-    setDebugMode: function(debugMode){
-        for (var i = 0; i < this.world.getItemCount(); i++) {
-            this.world.getItemAt(i).debugMode = debugMode;
-        }
-        this.debugMode = debugMode;
-        this.forceRedraw();
     },
     isFullPage: function () {
         return THIS[ this.hash ].fullPage;
@@ -742,8 +734,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     makeAjaxRequest: queueItem.options.makeAjaxRequest,
                     loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
-                    ajaxHeaders: queueItem.options.ajaxHeaders,
-                    debugMode: _this.debugMode
+                    ajaxHeaders: queueItem.options.ajaxHeaders
                 });
                 if (_this.collectionMode) {
                     _this.world.setAutoRefigureSizes(false);

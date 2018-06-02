@@ -17,7 +17,6 @@ $.Drawer = function( options ) {
 
     this.viewer = options.viewer;
     this.viewport = options.viewport;
-    this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
     this.useCanvas = this.viewer ? this.viewer.useCanvas : true;
 
     this.container = $.getElement( options.element );
@@ -289,114 +288,6 @@ $.Drawer.prototype = {
             );
         }
         this.context.restore();
-    },
-    // private
-    drawDebugInfo: function(tile, count, i, tiledImage) {
-        if ( !this.useCanvas ) {
-            return;
-        }
-        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
-        var context = this.context;
-        context.save();
-        context.lineWidth = 2 * $.pixelDensityRatio;
-        context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-        context.strokeStyle = this.debugGridColor[colorIndex];
-        context.fillStyle = this.debugGridColor[colorIndex];
-
-        if ( this.viewport.degrees !== 0 ) {
-            this._offsetForRotation({degrees: this.viewport.degrees});
-        }
-        if (tiledImage.getRotation(true) % 360 !== 0) {
-            this._offsetForRotation({
-                degrees: tiledImage.getRotation(true),
-                point: tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage._getRotationPoint(true), true)
-            });
-        }
-        context.strokeRect(
-            tile.position.x * $.pixelDensityRatio,
-            tile.position.y * $.pixelDensityRatio,
-            tile.size.x * $.pixelDensityRatio,
-            tile.size.y * $.pixelDensityRatio
-        );
-
-        var tileCenterX = (tile.position.x + (tile.size.x / 2)) * $.pixelDensityRatio;
-        var tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
-
-        // Rotate the text the right way around.
-        context.translate( tileCenterX, tileCenterY );
-        context.rotate( Math.PI / 180 * -this.viewport.degrees );
-        context.translate( -tileCenterX, -tileCenterY );
-
-        if( tile.x === 0 && tile.y === 0 ){
-            context.fillText(
-                "Zoom: " + this.viewport.getZoom(),
-                tile.position.x * $.pixelDensityRatio,
-                (tile.position.y - 30) * $.pixelDensityRatio
-            );
-            context.fillText(
-                "Pan: " + this.viewport.getBounds().toString(),
-                tile.position.x * $.pixelDensityRatio,
-                (tile.position.y - 20) * $.pixelDensityRatio
-            );
-        }
-        context.fillText(
-            "Level: " + tile.level,
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 20) * $.pixelDensityRatio
-        );
-        context.fillText(
-            "Column: " + tile.x,
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 30) * $.pixelDensityRatio
-        );
-        context.fillText(
-            "Row: " + tile.y,
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 40) * $.pixelDensityRatio
-        );
-        context.fillText(
-            "Order: " + i + " of " + count,
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 50) * $.pixelDensityRatio
-        );
-        context.fillText(
-            "Size: " + tile.size.toString(),
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 60) * $.pixelDensityRatio
-        );
-        context.fillText(
-            "Position: " + tile.position.toString(),
-            (tile.position.x + 10) * $.pixelDensityRatio,
-            (tile.position.y + 70) * $.pixelDensityRatio
-        );
-
-        if ( this.viewport.degrees !== 0 ) {
-            this._restoreRotationChanges();
-        }
-        if (tiledImage.getRotation(true) % 360 !== 0) {
-            this._restoreRotationChanges();
-        }
-        context.restore();
-    },
-    // private
-    debugRect: function(rect) {
-        if ( this.useCanvas ) {
-            var context = this.context;
-            context.save();
-            context.lineWidth = 2 * $.pixelDensityRatio;
-            context.strokeStyle = this.debugGridColor[0];
-            context.fillStyle = this.debugGridColor[0];
-
-            context.strokeRect(
-                rect.x * $.pixelDensityRatio,
-                rect.y * $.pixelDensityRatio,
-                rect.width * $.pixelDensityRatio,
-                rect.height * $.pixelDensityRatio
-            );
-
-            context.restore();
-        }
     },
     getCanvasSize: function(sketch) {
         var canvas = this._getContext(sketch).canvas;
