@@ -102,11 +102,6 @@ $.Viewer = function( options ) {
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
-    this.addHandler( 'open-failed', function ( event ) {
-        var msg = $.getString( "Errors.OpenFailed", event.eventSource, event.message);
-        _this._showMessage( msg );
-    });
-
     //Deal with tile sources
     if (this.xmlPath) {
         //Deprecated option. Now it is preferred to use the tileSources option
@@ -124,7 +119,6 @@ $.Viewer = function( options ) {
         style.top = "0px";
         style.left = "0px";
     }(this.canvas.style));
-    $.setElementTouchActionNone( this.canvas );
     if (options.tabIndex !== "") {
         this.canvas.tabIndex = (options.tabIndex === undefined ? 0 : options.tabIndex);
     }
@@ -493,11 +487,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                 this.toolbar.nextSibling = this.toolbar.element.nextSibling;
                 body.appendChild( this.toolbar.element );
 
-                //Make sure the user has some ability to style the toolbar based
-                //on the mode
-                $.addClass( this.toolbar.element, 'fullpage' );
             }
-            $.addClass( this.element, 'fullpage' );
             body.appendChild( this.element );
 
             this.element.style.height = $.getWindowSize().y + 'px';
@@ -533,7 +523,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             for ( i = 0; i < nodes; i++ ) {
                 body.appendChild( this.previousBody.shift() );
             }
-            $.removeClass( this.element, 'fullpage' );
             THIS[ this.hash ].prevElementParent.insertBefore(
                 this.element,
                 THIS[ this.hash ].prevNextSibling
@@ -543,10 +532,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             //reset it to its original state
             if ( this.toolbar && this.toolbar.element ) {
                 body.removeChild( this.toolbar.element );
-
-                //Make sure the user has some ability to style the toolbar based
-                //on the mode
-                $.removeClass( this.toolbar.element, 'fullpage' );
 
                 this.toolbar.parentNode.insertBefore(
                     this.toolbar.element,
@@ -585,8 +570,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         return this;
     },
     setFullScreen: function( fullScreen ) {
-        var _this = this;
-
         if ( !$.supportsFullScreen ) {
             return this.setFullPage( fullScreen );
         }
@@ -613,26 +596,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             this.element.style.width = '100%';
             this.element.style.height = '100%';
 
-            var onFullScreenChange = function() {
-                var isFullScreen = $.isFullScreen();
-                if ( !isFullScreen ) {
-                    $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
-                    $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
-
-                    _this.setFullPage( false );
-                    if ( _this.isFullPage() ) {
-                        _this.element.style.width = _this.fullPageStyleWidth;
-                        _this.element.style.height = _this.fullPageStyleHeight;
-                    }
-                }
-                if ( _this.navigator && _this.viewport ) {
-                    _this.navigator.update( _this.viewport );
-                }
-                _this.raiseEvent( 'full-screen', { fullScreen: isFullScreen } );
-            };
-            $.addEvent( document, $.fullScreenEventName, onFullScreenChange );
-            $.addEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
-
             $.requestFullScreen( document.body );
 
         } else {
@@ -656,7 +619,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         if (options.replace) {
             options.replaceItem = _this.world.getItemAt(options.index);
         }
-        this._hideMessage();
 
         if (options.placeholderFillStyle === undefined) {
             options.placeholderFillStyle = this.placeholderFillStyle;
@@ -890,25 +852,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             this.raiseEvent( 'page', { page: page } );
         }
         return this;
-    },
-    _showMessage: function ( message ) {
-        this._hideMessage();
-
-        var div = $.makeNeutralElement( "div" );
-        div.appendChild( document.createTextNode( message ) );
-
-        this.messageDiv = $.makeCenteredNode( div );
-
-        $.addClass(this.messageDiv, "openseadragon-message");
-
-        this.container.appendChild( this.messageDiv );
-    },
-    _hideMessage: function () {
-        var div = this.messageDiv;
-        if (div) {
-            div.parentNode.removeChild(div);
-            delete this.messageDiv;
-        }
     },
     gestureSettingsByDeviceType: function ( type ) {
         switch ( type ) {

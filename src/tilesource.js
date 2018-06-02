@@ -203,7 +203,6 @@ $.TileSource.prototype = {
     },
     getImageInfo: function( url ) {
         var _this = this,
-            callbackName,
             callback,
             readySource,
             options,
@@ -237,47 +236,34 @@ $.TileSource.prototype = {
 
             _this.raiseEvent( 'ready', { tileSource: readySource } );
         };
-        if( url.match(/\.js$/) ){
-            //TODO: Its not very flexible to require tile sources to end jsonp
-            // request for info with a url that ends with '.js' but for
-            // now it's the only way I see to distinguish uniformly.
-            callbackName = url.split('/').pop().replace('.js', '');
-            $.jsonp({
-                url: url,
-                async: false,
-                callbackName: callbackName,
-                callback: callback
-            });
-        } else {
-            // request info via xhr asynchronously.
-            $.makeAjaxRequest( {
-                url: url,
-                withCredentials: this.ajaxWithCredentials,
-                headers: this.ajaxHeaders,
-                success: function( xhr ) {
-                    var data = processResponse( xhr );
-                    callback( data );
-                },
-                error: function ( xhr, exc ) {
-                    var msg;
-                    try {
-                        msg = "HTTP " + xhr.status + " attempting to load TileSource";
-                    } catch ( e ) {
-                        var formattedExc;
-                        if ( typeof ( exc ) == "undefined" || !exc.toString ) {
-                            formattedExc = "Unknown error";
-                        } else {
-                            formattedExc = exc.toString();
-                        }
-                        msg = formattedExc + " attempting to load TileSource";
+        // request info via xhr asynchronously.
+        $.makeAjaxRequest( {
+            url: url,
+            withCredentials: this.ajaxWithCredentials,
+            headers: this.ajaxHeaders,
+            success: function( xhr ) {
+                var data = processResponse( xhr );
+                callback( data );
+            },
+            error: function ( xhr, exc ) {
+                var msg;
+                try {
+                    msg = "HTTP " + xhr.status + " attempting to load TileSource";
+                } catch ( e ) {
+                    var formattedExc;
+                    if ( typeof ( exc ) == "undefined" || !exc.toString ) {
+                        formattedExc = "Unknown error";
+                    } else {
+                        formattedExc = exc.toString();
                     }
-                    _this.raiseEvent( 'open-failed', {
-                        message: msg,
-                        source: url
-                    });
+                    msg = formattedExc + " attempting to load TileSource";
                 }
-            });
-        }
+                _this.raiseEvent( 'open-failed', {
+                    message: msg,
+                    source: url
+                });
+            }
+        });
     },
     supports: function( data, url ) {
         return false;

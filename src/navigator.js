@@ -34,8 +34,6 @@ $.Navigator = function( options ){
     });
     options.minPixelRatio = this.minPixelRatio = viewer.minPixelRatio;
 
-    $.setElementTouchActionNone( this.element );
-
     this.borderWidth = 2;
     //At some browser magnification levels the display regions lines up correctly, but at some there appears to
     //be a one pixel gap.

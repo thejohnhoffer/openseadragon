@@ -18,7 +18,7 @@ $.Drawer = function( options ) {
     this.viewer = options.viewer;
     this.viewport = options.viewport;
     this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-    this.useCanvas = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
+    this.useCanvas = this.viewer ? this.viewer.useCanvas : true;
 
     this.container = $.getElement( options.element );
 
