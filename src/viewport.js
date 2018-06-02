@@ -42,12 +42,9 @@ $.Viewport = function( options ) {
         minZoomImageRatio: $.DEFAULT_SETTINGS.minZoomImageRatio,
         maxZoomPixelRatio: $.DEFAULT_SETTINGS.maxZoomPixelRatio,
         visibilityRatio: $.DEFAULT_SETTINGS.visibilityRatio,
-        wrapHorizontal: $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical: $.DEFAULT_SETTINGS.wrapVertical,
         defaultZoomLevel: $.DEFAULT_SETTINGS.defaultZoomLevel,
         minZoomLevel: $.DEFAULT_SETTINGS.minZoomLevel,
         maxZoomLevel: $.DEFAULT_SETTINGS.maxZoomLevel,
-        homeFillsViewer: $.DEFAULT_SETTINGS.homeFillsViewer
 
     }, options );
     this._updateContainerInnerSize();
@@ -117,12 +114,7 @@ $.Viewport.prototype = {
             return this.defaultZoomLevel;
         }
         var aspectFactor = this._contentAspectRatio / this.getAspectRatio();
-        var output;
-        if (this.homeFillsViewer) { // fill the viewer and clip the image
-            output = aspectFactor >= 1 ? aspectFactor : 1;
-        } else {
-            output = aspectFactor >= 1 ? 1 : aspectFactor;
-        }
+        var output = aspectFactor >= 1 ? 1 : aspectFactor;
         return output / this._contentBounds.width;
     },
     getHomeBounds: function() {
@@ -268,40 +260,34 @@ $.Viewport.prototype = {
                 bounds.width,
                 bounds.height);
 
-        if (this.wrapHorizontal) {
-            //do nothing
-        } else {
-            var horizontalThreshold = this.visibilityRatio * newBounds.width;
-            var boundsRight = newBounds.x + newBounds.width;
-            var contentRight = this._contentBounds.x + this._contentBounds.width;
-            var leftDx = this._contentBounds.x - boundsRight + horizontalThreshold;
-            var rightDx = contentRight - newBounds.x - horizontalThreshold;
+        var horizontalThreshold = this.visibilityRatio * newBounds.width;
+        var boundsRight = newBounds.x + newBounds.width;
+        var contentRight = this._contentBounds.x + this._contentBounds.width;
+        var leftDx = this._contentBounds.x - boundsRight + horizontalThreshold;
+        var rightDx = contentRight - newBounds.x - horizontalThreshold;
 
-            if (horizontalThreshold > this._contentBounds.width) {
-                newBounds.x += (leftDx + rightDx) / 2;
-            } else if (rightDx < 0) {
-                newBounds.x += rightDx;
-            } else if (leftDx > 0) {
-                newBounds.x += leftDx;
-            }
+        if (horizontalThreshold > this._contentBounds.width) {
+            newBounds.x += (leftDx + rightDx) / 2;
+        } else if (rightDx < 0) {
+            newBounds.x += rightDx;
+        } else if (leftDx > 0) {
+            newBounds.x += leftDx;
         }
-        if (this.wrapVertical) {
-            //do nothing
-        } else {
-            var verticalThreshold = this.visibilityRatio * newBounds.height;
-            var boundsBottom = newBounds.y + newBounds.height;
-            var contentBottom = this._contentBounds.y + this._contentBounds.height;
-            var topDy = this._contentBounds.y - boundsBottom + verticalThreshold;
-            var bottomDy = contentBottom - newBounds.y - verticalThreshold;
 
-            if (verticalThreshold > this._contentBounds.height) {
-                newBounds.y += (topDy + bottomDy) / 2;
-            } else if (bottomDy < 0) {
-                newBounds.y += bottomDy;
-            } else if (topDy > 0) {
-                newBounds.y += topDy;
-            }
+        var verticalThreshold = this.visibilityRatio * newBounds.height;
+        var boundsBottom = newBounds.y + newBounds.height;
+        var contentBottom = this._contentBounds.y + this._contentBounds.height;
+        var topDy = this._contentBounds.y - boundsBottom + verticalThreshold;
+        var bottomDy = contentBottom - newBounds.y - verticalThreshold;
+
+        if (verticalThreshold > this._contentBounds.height) {
+            newBounds.y += (topDy + bottomDy) / 2;
+        } else if (bottomDy < 0) {
+            newBounds.y += bottomDy;
+        } else if (topDy > 0) {
+            newBounds.y += topDy;
         }
+
         return newBounds;
     },
     _raiseConstraintsEvent: function(immediately) {

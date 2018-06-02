@@ -1,7 +1,7 @@
 
 
 (function( $ ){
-$.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, ajaxHeaders, sourceBounds) {
+$.Tile = function(level, x, y, bounds, exists, url, context2D, ajaxHeaders, sourceBounds) {
     this.level = level;
 
     this.x = x;
@@ -17,8 +17,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.url = url;
 
     this.context2D = context2D;
-
-    this.loadWithAjax = loadWithAjax;
 
     this.ajaxHeaders = ajaxHeaders;
 

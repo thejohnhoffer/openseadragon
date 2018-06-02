@@ -150,7 +150,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
     arrange: function(options) {
         options = options || {};
         var immediately = options.immediately || false;
-        var layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
         var rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
         var columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
         var tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
@@ -169,13 +168,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
         this.setAutoRefigureSizes(false);
         for (var i = 0; i < this._items.length; i++) {
             if (i && (i % wrap) === 0) {
-                if (layout === 'horizontal') {
-                    y += increment;
-                    x = 0;
-                } else {
-                    x += increment;
-                    y = 0;
-                }
+                y += increment;
+                x = 0;
             }
             item = this._items[i];
             box = item.getBounds();
@@ -191,11 +185,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
             item.setPosition(position, immediately);
             item.setWidth(width, immediately);
 
-            if (layout === 'horizontal') {
-                x += increment;
-            } else {
-                y += increment;
-            }
+            x += increment;
         }
         this.setAutoRefigureSizes(true);
     },

@@ -144,58 +144,28 @@ function OpenSeadragon( options ){
     $.extend( $, {
         DEFAULT_SETTINGS: {
             //DATA SOURCE DETAILS
-            xmlPath: null,
             tileSources: null,
-            tileHost: null,
-            initialPage: 0,
-            crossOriginPolicy: false,
             ajaxWithCredentials: false,
-            loadTilesWithAjax: false,
             ajaxHeaders: {},
+
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
-            panHorizontal: true,
-            panVertical: true,
-            constrainDuringPan: false,
-            wrapHorizontal: false,
-            wrapVertical: false,
             visibilityRatio: 0.5, //-> how much of the viewer can be negative space
             minPixelRatio: 0.5, //->closer to 0 draws tiles meant for a higher zoom at this zoom
             defaultZoomLevel: 0,
             minZoomLevel: null,
             maxZoomLevel: null,
-            homeFillsViewer: false,
 
             //UI RESPONSIVENESS AND FEEL
-            clickTimeThreshold: 300,
-            clickDistThreshold: 5,
-            dblClickTimeThreshold: 300,
-            dblClickDistThreshold: 20,
             springStiffness: 6.5,
             animationTime: 1.2,
 
-            zoomPerClick: 2,
-            zoomPerScroll: 1.2,
-            zoomPerSecond: 1.0,
-            blendTime: 0,
-            alwaysBlend: false,
-            immediateRender: false,
             minZoomImageRatio: 0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio: 1.1, //-> higher allows 'over zoom' into pixels
             smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
-            pixelsPerWheelLine: 40,
-            pixelsPerArrowPress: 40,
-            autoResize: true,
-            preserveImageSizeOnResize: false, // requires autoResize=true
-            minScrollDeltaTime: 50,
-
-            preserveViewport: false, //SEQUENCE
-            navPrevNextWrap: false, //SEQUENCE
-            mouseNavEnabled: true, //GENERAL MOUSE INTERACTIVITY
 
             //COLLECTION VISUALIZATION SETTINGS
-            collectionRows: 3, //or columns depending on layout
-            collectionColumns: 0, //columns in horizontal layout, rows in vertical layout
-            collectionLayout: 'horizontal', //vertical
+            collectionRows: 3,
+            collectionColumns: 0,
             collectionMode: false,
             collectionTileSize: 800,
             collectionTileMargin: 80,

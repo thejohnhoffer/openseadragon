@@ -60,15 +60,9 @@ $.TiledImage = function( options ) {
         springStiffness: $.DEFAULT_SETTINGS.springStiffness,
         animationTime: $.DEFAULT_SETTINGS.animationTime,
         minZoomImageRatio: $.DEFAULT_SETTINGS.minZoomImageRatio,
-        wrapHorizontal: $.DEFAULT_SETTINGS.wrapHorizontal,
-        wrapVertical: $.DEFAULT_SETTINGS.wrapVertical,
-        immediateRender: $.DEFAULT_SETTINGS.immediateRender,
-        blendTime: $.DEFAULT_SETTINGS.blendTime,
-        alwaysBlend: $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio: $.DEFAULT_SETTINGS.minPixelRatio,
         smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice: $.DEFAULT_SETTINGS.iOSDevice,
-        crossOriginPolicy: $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials: $.DEFAULT_SETTINGS.ajaxWithCredentials,
     }, options );
 
@@ -453,14 +447,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
         var drawArea = this._viewportToTiledImageRectangle(
             viewport.getBoundsWithMargins(true));
 
-        if (!this.wrapHorizontal && !this.wrapVertical) {
-            var tiledImageBounds = this._viewportToTiledImageRectangle(
-                this.getClippedBounds(true));
-            drawArea = drawArea.intersection(tiledImageBounds);
-            if (drawArea === null) {
-                return;
-            }
+        var tiledImageBounds = this._viewportToTiledImageRectangle(
+            this.getClippedBounds(true));
+        drawArea = drawArea.intersection(tiledImageBounds);
+        if (drawArea === null) {
+            return;
         }
+
         var levelsInterval = this._getLevelsInterval();
         var lowestLevel = levelsInterval.lowestLevel;
         var highestLevel = levelsInterval.highestLevel;
@@ -501,7 +494,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
                 false
             ).x * this._scaleSpring.current.value;
 
-            var optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
+            var optimalRatio = targetZeroRatio;
             var levelVisibility = optimalRatio / Math.abs(
                 optimalRatio - targetRenderPixelRatio
             );
@@ -538,37 +531,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
     },
     // private
     _getCornerTiles: function(level, topLeftBound, bottomRightBound) {
-        var leftX;
-        var rightX;
-        if (this.wrapHorizontal) {
-            leftX = $.positiveModulo(topLeftBound.x, 1);
-            rightX = $.positiveModulo(bottomRightBound.x, 1);
-        } else {
-            leftX = Math.max(0, topLeftBound.x);
-            rightX = Math.min(1, bottomRightBound.x);
-        }
-        var topY;
-        var bottomY;
+        var leftX = Math.max(0, topLeftBound.x);
+        var rightX = Math.min(1, bottomRightBound.x);
         var aspectRatio = 1 / this.source.aspectRatio;
-        if (this.wrapVertical) {
-            topY = $.positiveModulo(topLeftBound.y, aspectRatio);
-            bottomY = $.positiveModulo(bottomRightBound.y, aspectRatio);
-        } else {
-            topY = Math.max(0, topLeftBound.y);
-            bottomY = Math.min(aspectRatio, bottomRightBound.y);
-        }
+        var topY = Math.max(0, topLeftBound.y);
+        var bottomY = Math.min(aspectRatio, bottomRightBound.y);
+
         var topLeftTile = this.source.getTileAtPoint(level, new $.Point(leftX, topY));
         var bottomRightTile = this.source.getTileAtPoint(level, new $.Point(rightX, bottomY));
-        var numTiles = this.source.getNumTiles(level);
-
-        if (this.wrapHorizontal) {
-            topLeftTile.x += numTiles.x * Math.floor(topLeftBound.x);
-            bottomRightTile.x += numTiles.x * Math.floor(bottomRightBound.x);
-        }
-        if (this.wrapVertical) {
-            topLeftTile.y += numTiles.y * Math.floor(topLeftBound.y / aspectRatio);
-            bottomRightTile.y += numTiles.y * Math.floor(bottomRightBound.y / aspectRatio);
-        }
         return {
             topLeft: topLeftTile,
             bottomRight: bottomRightTile,
@@ -606,14 +576,11 @@ function updateLevel(tiledImage, haveDrawn, drawLevel, level,
         tiledImage.viewport.getCenter());
     for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
         for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
-            // Optimisation disabled with wrapping because getTileBounds does not
-            // work correctly with x and y outside of the number of tiles
-            if (!tiledImage.wrapHorizontal && !tiledImage.wrapVertical) {
-                var tileBounds = tiledImage.source.getTileBounds(level, x, y);
-                if (drawArea.intersection(tileBounds) === null) {
-                    // This tile is outside of the viewport, no need to draw it
-                    continue;
-                }
+            // Optimisation
+            var tileBounds = tiledImage.source.getTileBounds(level, x, y);
+            if (drawArea.intersection(tileBounds) === null) {
+                // This tile is outside of the viewport, no need to draw it
+                continue;
             }
             best = updateTile(
                 tiledImage,
@@ -745,16 +712,12 @@ function getTile(
         exists = tileSource.tileExists( level, xMod, yMod );
         url = tileSource.getTileUrl( level, xMod, yMod );
 
-        // Headers are only applicable if loadTilesWithAjax is set
-        if (tiledImage.loadTilesWithAjax) {
-            ajaxHeaders = tileSource.getTileAjaxHeaders( level, xMod, yMod );
-            // Combine tile AJAX headers with tiled image AJAX headers (if applicable)
-            if ($.isPlainObject(tiledImage.ajaxHeaders)) {
-                ajaxHeaders = $.extend({}, tiledImage.ajaxHeaders, ajaxHeaders);
-            }
-        } else {
-            ajaxHeaders = null;
+        ajaxHeaders = tileSource.getTileAjaxHeaders( level, xMod, yMod );
+        // Combine tile AJAX headers with tiled image AJAX headers (if applicable)
+        if ($.isPlainObject(tiledImage.ajaxHeaders)) {
+            ajaxHeaders = $.extend({}, tiledImage.ajaxHeaders, ajaxHeaders);
         }
+
         context2D = tileSource.getContext2D ?
             tileSource.getContext2D(level, xMod, yMod) : undefined;
 
@@ -769,7 +732,6 @@ function getTile(
             exists,
             url,
             context2D,
-            tiledImage.loadTilesWithAjax,
             ajaxHeaders,
             sourceBounds
         );
@@ -798,9 +760,7 @@ function loadTile( tiledImage, tile, time ) {
     tiledImage._imageLoader.addJob({
         src: tile.url,
         makeAjaxRequest: customAjax,
-        loadWithAjax: tile.loadWithAjax,
         ajaxHeaders: tile.ajaxHeaders,
-        crossOriginPolicy: tiledImage.crossOriginPolicy,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
         callback: function( image, errorMsg, tileRequest ){
             onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
@@ -896,12 +856,6 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
 
     if ( !overlap ) {
         sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-    }
-    if (tile.isRightMost && tiledImage.wrapHorizontal) {
-        sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
-    }
-    if (tile.isBottomMost && tiledImage.wrapVertical) {
-        sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
     }
     tile.position = positionC;
     tile.size = sizeC;

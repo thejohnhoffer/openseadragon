@@ -6,24 +6,8 @@ var THIS = {};
 var nextHash = 1;
 
 $.Viewer = function( options ) {
-    var args = arguments,
-        _this = this;
+    var _this = this;
 
-    //backward compatibility for positional args while prefering more
-    //idiomatic javascript options object as the only argument
-    if( !$.isPlainObject( options ) ){
-        options = {
-            id: args[ 0 ],
-            xmlPath: args.length > 1 ? args[ 1 ] : undefined,
-        };
-    }
-    //options.config and the general config argument are deprecated
-    //in favor of the more direct specification of optional settings
-    //being pass directly on the options object
-    if ( options.config ){
-        $.extend( true, options, options.config );
-        delete options.config;
-    }
     //Public properties
     //Allow the options object to override global defaults
     $.extend( true, this, {
@@ -31,7 +15,6 @@ $.Viewer = function( options ) {
         id: options.id,
         hash: options.hash || nextHash++,
 
-        initialPage: 0,
 
         //dom nodes
 
@@ -93,11 +76,6 @@ $.Viewer = function( options ) {
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
-    //Deal with tile sources
-    if (this.xmlPath) {
-        //Deprecated option. Now it is preferred to use the tileSources option
-        this.tileSources = [ this.xmlPath ];
-    }
     this.element = this.element || document.getElementById( this.id );
     this.canvas = $.makeNeutralElement( "div" );
 
@@ -176,13 +154,10 @@ $.Viewer = function( options ) {
         minZoomImageRatio: this.minZoomImageRatio,
         maxZoomPixelRatio: this.maxZoomPixelRatio,
         visibilityRatio: this.visibilityRatio,
-        wrapHorizontal: this.wrapHorizontal,
-        wrapVertical: this.wrapVertical,
         defaultZoomLevel: this.defaultZoomLevel,
         minZoomLevel: this.minZoomLevel,
         maxZoomLevel: this.maxZoomLevel,
         viewer: this,
-        homeFillsViewer: this.homeFillsViewer,
         margins: this.viewportMargins
     });
     this.viewport._setContentBounds(this.world.getHomeBounds(), this.world.getContentFactor());
@@ -221,7 +196,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     openTileSource: function ( tileSource ) {
         return this.open( tileSource );
     },
-    open: function (tileSources, initialPage) {
+    open: function (tileSources) {
         var _this = this;
 
         this.close();
@@ -230,11 +205,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             return;
         }
         if (this.sequenceMode && $.isArray(tileSources)) {
-            if (typeof initialPage != 'undefined' && !isNaN(initialPage)) {
-              this.initialPage = initialPage;
-            }
             this.tileSources = tileSources;
-            this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+            this._sequenceIndex = 0;
             if (this.tileSources.length) {
                 this.open(this.tileSources[this._sequenceIndex]);
             }
@@ -256,10 +228,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
         var checkCompletion = function() {
             if (successes + failures === expected) {
                 if (successes) {
-                    if (_this._firstOpen || !_this.preserveViewport) {
-                        _this.viewport.goHome( true );
-                        _this.viewport.update();
-                    }
+                    _this.viewport.goHome( true );
+                    _this.viewport.update();
                     _this._firstOpen = false;
 
                     var source = tileSources[0];
@@ -363,12 +333,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
-    },
-    isMouseNavEnabled: function () {
-        return false;
-    },
-    setMouseNavEnabled: function( enabled ){
-        return this;
     },
     isFullPage: function () {
         return THIS[ this.hash ].fullPage;
@@ -576,17 +540,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
             options.replaceItem = _this.world.getItemAt(options.index);
         }
 
-        if (options.crossOriginPolicy === undefined) {
-            options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
-        }
         if (options.ajaxWithCredentials === undefined) {
             options.ajaxWithCredentials = this.ajaxWithCredentials;
         }
         if (options.makeAjaxRequest === undefined) {
             options.makeAjaxRequest = options.tileSource.makeAjaxRequest;
-        }
-        if (options.loadTilesWithAjax === undefined) {
-            options.loadTilesWithAjax = this.loadTilesWithAjax;
         }
         if (options.ajaxHeaders === undefined || options.ajaxHeaders === null) {
             options.ajaxHeaders = this.ajaxHeaders;
@@ -618,7 +576,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     immediately: theItem.options.collectionImmediately,
                     rows: _this.collectionRows,
                     columns: _this.collectionColumns,
-                    layout: _this.collectionLayout,
                     tileSize: _this.collectionTileSize,
                     tileMargin: _this.collectionTileMargin
                 });
@@ -669,18 +626,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     springStiffness: _this.springStiffness,
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
-                    wrapHorizontal: _this.wrapHorizontal,
-                    wrapVertical: _this.wrapVertical,
-                    immediateRender: _this.immediateRender,
-                    blendTime: _this.blendTime,
-                    alwaysBlend: _this.alwaysBlend,
                     minPixelRatio: _this.minPixelRatio,
                     smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     iOSDevice: _this.iOSDevice,
-                    crossOriginPolicy: queueItem.options.crossOriginPolicy,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     makeAjaxRequest: queueItem.options.makeAjaxRequest,
-                    loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
                     ajaxHeaders: queueItem.options.ajaxHeaders
                 });
                 if (_this.collectionMode) {
@@ -693,9 +643,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
                     //this restores the autoRefigureSizes flag to true.
                     refreshWorld(queueItem);
                 }
-                if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
-                    _this.viewport.goHome(true);
-                }
+                _this.viewport.goHome(true);
                 if (queueItem.options.success) {
                     queueItem.options.success({
                         item: tiledImage
@@ -795,8 +743,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             //If its still a string it means it must be a url at this point
             tileSource = new $.TileSource({
                 url: tileSource,
-                crossOriginPolicy: imgOptions.crossOriginPolicy !== undefined ?
-                    imgOptions.crossOriginPolicy : viewer.crossOriginPolicy,
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 ajaxHeaders: viewer.ajaxHeaders,
                 success: function( event ) {
@@ -807,11 +753,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 failCallback( event );
             } );
         } else if ($.isPlainObject(tileSource) || tileSource.nodeType) {
-            if (tileSource.crossOriginPolicy === undefined &&
-                (imgOptions.crossOriginPolicy !== undefined || viewer.crossOriginPolicy !== undefined)) {
-                tileSource.crossOriginPolicy = imgOptions.crossOriginPolicy !== undefined ?
-                    imgOptions.crossOriginPolicy : viewer.crossOriginPolicy;
-            }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
             }
@@ -890,28 +831,6 @@ function updateOnce( viewer ) {
 
     if (viewer._opening) {
         return;
-    }
-    if (viewer.autoResize) {
-        var containerSize = _getSafeElemSize(viewer.container);
-        var prevContainerSize = THIS[viewer.hash].prevContainerSize;
-        if (!containerSize.equals(prevContainerSize)) {
-            var viewport = viewer.viewport;
-            if (viewer.preserveImageSizeOnResize) {
-                var resizeRatio = prevContainerSize.x / containerSize.x;
-                var zoom = viewport.getZoom() * resizeRatio;
-                var center = viewport.getCenter();
-                viewport.resize(containerSize, false);
-                viewport.zoomTo(zoom, null, true);
-                viewport.panTo(center, true);
-            } else {
-                // maintain image position
-                var oldBounds = viewport.getBounds();
-                viewport.resize(containerSize, true);
-                viewport.fitBoundsWithConstraints(oldBounds, true);
-            }
-            THIS[viewer.hash].prevContainerSize = containerSize;
-            THIS[viewer.hash].forceRedraw = true;
-        }
     }
     var viewportChange = viewer.viewport.update();
     var animated = viewer.world.update() || viewportChange;
