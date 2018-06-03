@@ -84,8 +84,8 @@ $.Drawer.prototype = {
         }
         this._clear();
     },
-    _clear: function (useSketch, bounds) {
-        var context = this._getContext(useSketch);
+    _clear: function (bounds) {
+        var context = this._getContext();
         if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
@@ -104,37 +104,35 @@ $.Drawer.prototype = {
             size.y * $.pixelDensityRatio
         );
     },
-    drawTile: function(tile, useSketch, scale, translate) {
+    drawTile: function(tile, scale, translate) {
 
-        var context = this._getContext(useSketch);
+        var context = this._getContext();
         scale = scale || 1;
         tile.drawCanvas(context, scale, translate);
     },
-    _getContext: function( useSketch ) {
+    _getContext: function() {
         var context = this.context;
-        if ( useSketch ) {
-            if (this.sketchCanvas === null) {
-                this.sketchCanvas = document.createElement( "canvas" );
-                var sketchCanvasSize = this._calculateSketchCanvasSize();
-                this.sketchCanvas.width = sketchCanvasSize.x;
-                this.sketchCanvas.height = sketchCanvasSize.y;
-                this.sketchContext = this.sketchCanvas.getContext( "2d" );
-            }
-            context = this.sketchContext;
+        if (this.sketchCanvas === null) {
+            this.sketchCanvas = document.createElement( "canvas" );
+            var sketchCanvasSize = this._calculateSketchCanvasSize();
+            this.sketchCanvas.width = sketchCanvasSize.x;
+            this.sketchCanvas.height = sketchCanvasSize.y;
+            this.sketchContext = this.sketchCanvas.getContext( "2d" );
         }
+        context = this.sketchContext;
         return context;
     },
     // private
-    saveContext: function( useSketch ) {
-        this._getContext( useSketch ).save();
+    saveContext: function() {
+        this._getContext().save();
     },
     // private
-    restoreContext: function( useSketch ) {
-        this._getContext( useSketch ).restore();
+    restoreContext: function() {
+        this._getContext().restore();
     },
     // private
-    setClip: function(rect, useSketch) {
-        var context = this._getContext( useSketch );
+    setClip: function(rect) {
+        var context = this._getContext();
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();

@@ -886,11 +886,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         return;
     }
     var tile = lastDrawn[0];
-    var useSketch;
 
-    if (tile) {
-        useSketch = !tiledImage._isBottomItem() && tile._hasTransparencyChannel();
-    }
     var sketchScale;
     var sketchTranslate;
 
@@ -901,27 +897,24 @@ function drawTiles( tiledImage, lastDrawn ) {
         imageZoom > tiledImage.smoothTileEdgesMinZoom) {
         // When zoomed in a lot (>100%) the tile edges are visible.
         // So we have to composite them at ~100% and scale them up together.
-        useSketch = true;
         sketchScale = tile.getScaleForEdgeSmoothing();
         sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
             tiledImage._drawer.getCanvasSize(false),
             tiledImage._drawer.getCanvasSize(true));
     }
     var bounds;
-    if (useSketch) {
-        if (!sketchScale) {
-            // Except when edge smoothing, we only clean the part of the
-            // sketch canvas we are going to use for performance reasons.
-            bounds = tiledImage.viewport.viewportToViewerElementRectangle(
-                tiledImage.getClippedBounds(true))
-                .getIntegerBoundingBox()
-                .times($.pixelDensityRatio);
-        }
-        tiledImage._drawer._clear(true, bounds);
+    if (!sketchScale) {
+        // Except when edge smoothing, we only clean the part of the
+        // sketch canvas we are going to use for performance reasons.
+        bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+            tiledImage.getClippedBounds(true))
+            .getIntegerBoundingBox()
+            .times($.pixelDensityRatio);
     }
+    tiledImage._drawer._clear(true, bounds);
     var usedClip = false;
     if ( tiledImage._clip ) {
-        tiledImage._drawer.saveContext(useSketch);
+        tiledImage._drawer.saveContext();
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
@@ -931,25 +924,23 @@ function drawTiles( tiledImage, lastDrawn ) {
         if (sketchTranslate) {
             clipRect = clipRect.translate(sketchTranslate);
         }
-        tiledImage._drawer.setClip(clipRect, useSketch);
+        tiledImage._drawer.setClip(clipRect);
 
         usedClip = true;
     }
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, useSketch, sketchScale, sketchTranslate );
+        tiledImage._drawer.drawTile( tile, sketchScale, sketchTranslate );
         tile.beingDrawn = true;
 
     }
     if ( usedClip ) {
-        tiledImage._drawer.restoreContext( useSketch );
+        tiledImage._drawer.restoreContext();
     }
-    if (useSketch) {
-        tiledImage._drawer.blendSketch({
-            scale: sketchScale,
-            translate: sketchTranslate,
-            bounds: bounds
-        });
-    }
+    tiledImage._drawer.blendSketch({
+        scale: sketchScale,
+        translate: sketchTranslate,
+        bounds: bounds
+    });
 }
 }( OpenSeadragon ));
