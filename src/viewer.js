@@ -1,5 +1,3 @@
-
-
 (function( $ ){
 // dictionary from hash to private properties
 var THIS = {};
@@ -153,8 +151,7 @@ $.Viewer = function( options ) {
         this.open( this.tileSources );
     }
 };
-$.extend( $.Viewer.prototype, $.EventSource.prototype, {
-
+$.Viewer.prototype = {
     isOpen: function () {
         return !!this.world.getItemCount();
     },
@@ -425,7 +422,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, {
     _cancelPendingImages: function() {
         this._loadQueue = [];
     },
-});
+};
+$.extend($.Viewer.prototype, $.EventSource.prototype);
+
 function _getSafeElemSize (oElement) {
     oElement = $.getElement( oElement );
 

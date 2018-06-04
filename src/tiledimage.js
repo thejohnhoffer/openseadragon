@@ -83,7 +83,7 @@ $.TiledImage = function( options ) {
     this._updateForScale();
 
 };
-$.extend($.TiledImage.prototype, $.EventSource.prototype, {
+$.TiledImage.prototype = {
     needsDraw: function() {
         return this._needsDraw;
     },
@@ -519,7 +519,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, {
             bottomRight: bottomRightTile,
         };
     }
-});
+};
+$.extend($.TiledImage.prototype, $.EventSource.prototype);
+
 function updateLevel(tiledImage, haveDrawn, drawLevel, level,
     levelVisibility, drawArea, currentTime, best) {
     var topLeftBound = drawArea.getBoundingBox().getTopLeft();

@@ -20,7 +20,7 @@ $.World = function( options ) {
     };
     this._figureSizes();
 };
-$.extend( $.World.prototype, $.EventSource.prototype, {
+$.World.prototype = {
     addItem: function( item, options ) {
 
         options = options || {};
@@ -213,5 +213,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, {
     _raiseRemoveItem: function(item) {
         this.raiseEvent( 'remove-item', { item: item } );
     }
-});
+};
+$.extend($.World.prototype, $.EventSource.prototype);
+
 }( OpenSeadragon ));
