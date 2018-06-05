@@ -415,10 +415,6 @@ $.Viewer.prototype = {
             processReadyItems();
         } );
     },
-    forceRedraw: function() {
-        THIS[ this.hash ].forceRedraw = true;
-        return this;
-    },
     _cancelPendingImages: function() {
         this._loadQueue = [];
     },
