@@ -547,17 +547,6 @@ $.Viewport.prototype = {
             this.pixelFromPoint(rectangle.getBottomLeft(), true)
         );
     },
-    viewportToImageZoom: function(viewportZoom) {
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.viewportToImageZoom(viewportZoom);
-        }
-        var imageWidth = this._contentSize.x;
-        var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBounds.width;
-        var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
-        return viewportZoom * viewportToImageZoomRatio;
-    },
     imageToViewportZoom: function(imageZoom) {
         if (this.viewer) {
             var item = this.viewer.world.getItemAt(0);
