@@ -382,10 +382,6 @@ $.TiledImage.prototype = {
         this.raiseEvent('bounds-change');
     },
     // private
-    _isBottomItem: function() {
-        return this.viewer.world.getItemAt(0) === this;
-    },
-    // private
     _getLevelsInterval: function() {
         var lowestLevel = Math.max(
             this.source.minLevel,
