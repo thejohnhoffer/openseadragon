@@ -44,14 +44,6 @@ $.Drawer = function( options ) {
 };
 $.Drawer.prototype = {
     // deprecated
-    needsUpdate: function() {
-        return this.viewer.world.needsDraw();
-    },
-    // deprecated
-    numTilesLoaded: function() {
-        return this.viewer.tileCache.numTilesLoaded();
-    },
-    // deprecated
     reset: function() {
         this.viewer.world.resetItems();
         return this;

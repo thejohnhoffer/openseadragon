@@ -56,9 +56,6 @@ $.TileCache = function( options ) {
     this._imagesLoadedCount = 0;
 };
 $.TileCache.prototype = {
-    numTilesLoaded: function() {
-        return this._tilesLoaded.length;
-    },
     cacheTile: function( options ) {
 
         var cutoff = options.cutoff || 0;
