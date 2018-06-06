@@ -237,42 +237,6 @@ $.TiledImage.prototype = {
     setHeight: function(height, immediately) {
         this._setScale(height / this.normHeight, immediately);
     },
-    fitBounds: function(bounds, anchor, immediately) {
-        var aspectRatio = this.contentAspectX;
-        var xOffset = 0;
-        var yOffset = 0;
-        var displayedWidthRatio = 1;
-        var displayedHeightRatio = 1;
-        if (this._clip) {
-            aspectRatio = this._clip.getAspectRatio();
-            displayedWidthRatio = this._clip.width / this.source.dimensions.x;
-            displayedHeightRatio = this._clip.height / this.source.dimensions.y;
-            if (bounds.getAspectRatio() > aspectRatio) {
-                xOffset = this._clip.x / this._clip.height * bounds.height;
-                yOffset = this._clip.y / this._clip.height * bounds.height;
-            } else {
-                xOffset = this._clip.x / this._clip.width * bounds.width;
-                yOffset = this._clip.y / this._clip.width * bounds.width;
-            }
-        }
-        if (bounds.getAspectRatio() > aspectRatio) {
-            // We will have margins on the X axis
-            var height = bounds.height / displayedHeightRatio;
-            var marginLeft = 0;
-            this.setPosition(
-                new $.Point(bounds.x - xOffset + marginLeft, bounds.y - yOffset),
-                immediately);
-            this.setHeight(height, immediately);
-        } else {
-            // We will have margins on the Y axis
-            var width = bounds.width / displayedWidthRatio;
-            var marginTop = 0;
-            this.setPosition(
-                new $.Point(bounds.x - xOffset, bounds.y - yOffset + marginTop),
-                immediately);
-            this.setWidth(width, immediately);
-        }
-    },
     setClip: function(newClip) {
 
         if (newClip instanceof $.Rect) {
