@@ -433,14 +433,6 @@ $.Viewport.prototype = {
             this._containerInnerSize.x / bounds.width
         );
     },
-    pointFromPixel: function(pixel, current) {
-        var bounds = this.getBounds(current);
-        return pixel.divide(
-            this._containerInnerSize.x / bounds.width
-        ).plus(
-            bounds.getTopLeft()
-        );
-    },
     viewportToViewerElementRectangle: function(rectangle) {
         return $.Rect.fromSummits(
             this.pixelFromPoint(rectangle.getTopLeft(), true),
