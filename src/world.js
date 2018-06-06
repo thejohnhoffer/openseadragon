@@ -88,11 +88,6 @@ $.World.prototype = {
             this._raiseRemoveItem(item);
         }
     },
-    resetItems: function() {
-        for ( var i = 0; i < this._items.length; i++ ) {
-            this._items[i].reset();
-        }
-    },
     update: function() {
         var animated = false;
         for ( var i = 0; i < this._items.length; i++ ) {

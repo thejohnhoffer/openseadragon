@@ -43,17 +43,6 @@ $.Drawer = function( options ) {
     this.container.appendChild( this.canvas );
 };
 $.Drawer.prototype = {
-    // deprecated
-    reset: function() {
-        this.viewer.world.resetItems();
-        return this;
-    },
-    // deprecated
-    update: function() {
-        this.clear();
-        this.viewer.world.draw();
-        return this;
-    },
     clear: function() {
         this.canvas.innerHTML = "";
         var viewportSize = this._calculateCanvasSize();
