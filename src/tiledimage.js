@@ -234,9 +234,6 @@ $.TiledImage.prototype = {
     setWidth: function(width, immediately) {
         this._setScale(width, immediately);
     },
-    setHeight: function(height, immediately) {
-        this._setScale(height / this.normHeight, immediately);
-    },
     setClip: function(newClip) {
 
         if (newClip instanceof $.Rect) {
