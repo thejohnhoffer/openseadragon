@@ -151,29 +151,6 @@ $.TiledImage.prototype = {
         return new $.Point(this.source.dimensions.x, this.source.dimensions.y);
     },
     // private
-    _viewportToImageDelta: function( viewerX, viewerY, current ) {
-        var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
-        return new $.Point(viewerX * (this.source.dimensions.x / scale),
-            viewerY * ((this.source.dimensions.y * this.contentAspectX) / scale));
-    },
-    viewportToImageCoordinates: function(viewerX, viewerY, current) {
-        var point;
-        if (viewerX instanceof $.Point) {
-            //they passed a point instead of individual components
-            current = viewerY;
-            point = viewerX;
-        } else {
-            point = new $.Point(viewerX, viewerY);
-        }
-        return current ?
-            this._viewportToImageDelta(
-                point.x - this._xSpring.current.value,
-                point.y - this._ySpring.current.value) :
-            this._viewportToImageDelta(
-                point.x - this._xSpring.target.value,
-                point.y - this._ySpring.target.value);
-    },
-    // private
     _imageToViewportDelta: function( imageX, imageY, current ) {
         var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
         return new $.Point((imageX / this.source.dimensions.x) * scale,
@@ -214,42 +191,6 @@ $.TiledImage.prototype = {
             coordB.y
         );
     },
-    viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
-        var rect = viewerX;
-        if (viewerX instanceof $.Rect) {
-            //they passed a rect instead of individual components
-            current = viewerY;
-        } else {
-            rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
-        }
-        var coordA = this.viewportToImageCoordinates(rect.getTopLeft(), current);
-        var coordB = this._viewportToImageDelta(rect.width, rect.height, current);
-
-        return new $.Rect(
-            coordA.x,
-            coordA.y,
-            coordB.x,
-            coordB.y
-        );
-    },
-    viewerElementToImageCoordinates: function( pixel ) {
-        var point = this.viewport.pointFromPixel( pixel, true );
-        return this.viewportToImageCoordinates( point );
-    },
-    imageToViewerElementCoordinates: function( pixel ) {
-        var point = this.imageToViewportCoordinates( pixel );
-        return this.viewport.pixelFromPoint( point, true );
-    },
-    windowToImageCoordinates: function( pixel ) {
-        var viewerCoordinates = pixel.minus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
-        return this.viewerElementToImageCoordinates( viewerCoordinates );
-    },
-    imageToWindowCoordinates: function( pixel ) {
-        var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
-        return viewerCoordinates.plus(
-                OpenSeadragon.getElementPosition( this.viewer.element ));
-    },
     // private
     // Convert rectangle in viewport coordinates to this tiled image point
     // coordinates (x in [0, 1] and y in [0, aspectRatio])
@@ -265,11 +206,6 @@ $.TiledImage.prototype = {
         var ratio = this._scaleSpring.current.value *
                 this.viewport._containerInnerSize.x / this.source.dimensions.x;
         return ratio * viewportZoom;
-    },
-    imageToViewportZoom: function( imageZoom ) {
-        var ratio = this._scaleSpring.current.value *
-                this.viewport._containerInnerSize.x / this.source.dimensions.x;
-        return imageZoom / ratio;
     },
     setPosition: function(position, immediately) {
         var sameTarget = (this._xSpring.target.value === position.x &&

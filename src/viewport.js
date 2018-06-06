@@ -442,103 +442,11 @@ $.Viewport.prototype = {
         );
     },
     // private
-    _viewportToImageDelta: function( viewerX, viewerY ) {
-        var scale = this._contentBounds.width;
-        return new $.Point(
-            viewerX * this._contentSize.x / scale,
-            viewerY * this._contentSize.x / scale);
-    },
-    viewportToImageCoordinates: function(viewerX, viewerY) {
-        if (viewerX instanceof $.Point) {
-            //they passed a point instead of individual components
-            return this.viewportToImageCoordinates(viewerX.x, viewerX.y);
-        }
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.viewportToImageCoordinates(viewerX, viewerY, true);
-        }
-        return this._viewportToImageDelta(
-            viewerX - this._contentBounds.x,
-            viewerY - this._contentBounds.y);
-    },
-    // private
     _imageToViewportDelta: function( imageX, imageY ) {
         var scale = this._contentBounds.width;
         return new $.Point(
             imageX / this._contentSize.x * scale,
             imageY / this._contentSize.x * scale);
-    },
-    imageToViewportCoordinates: function(imageX, imageY) {
-        if (imageX instanceof $.Point) {
-            //they passed a point instead of individual components
-            return this.imageToViewportCoordinates(imageX.x, imageX.y);
-        }
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.imageToViewportCoordinates(imageX, imageY, true);
-        }
-        var point = this._imageToViewportDelta(imageX, imageY);
-        point.x += this._contentBounds.x;
-        point.y += this._contentBounds.y;
-        return point;
-    },
-    imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
-        var rect = imageX;
-        if (!(rect instanceof $.Rect)) {
-            //they passed individual components instead of a rectangle
-            rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
-        }
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.imageToViewportRectangle(
-                imageX, imageY, pixelWidth, pixelHeight, true);
-        }
-        var coordA = this.imageToViewportCoordinates(rect.x, rect.y);
-        var coordB = this._imageToViewportDelta(rect.width, rect.height);
-        return new $.Rect(
-            coordA.x,
-            coordA.y,
-            coordB.x,
-            coordB.y
-        );
-  },
-    viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
-        var rect = viewerX;
-        if (!(rect instanceof $.Rect)) {
-            //they passed individual components instead of a rectangle
-            rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
-        }
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.viewportToImageRectangle(
-                viewerX, viewerY, pointWidth, pointHeight, true);
-        }
-        var coordA = this.viewportToImageCoordinates(rect.x, rect.y);
-        var coordB = this._viewportToImageDelta(rect.width, rect.height);
-        return new $.Rect(
-            coordA.x,
-            coordA.y,
-            coordB.x,
-            coordB.y
-        );
-    },
-    viewerElementToImageCoordinates: function( pixel ) {
-        var point = this.pointFromPixel( pixel, true );
-        return this.viewportToImageCoordinates( point );
-    },
-    imageToViewerElementCoordinates: function( pixel ) {
-        var point = this.imageToViewportCoordinates( pixel );
-        return this.pixelFromPoint( point, true );
-    },
-    windowToImageCoordinates: function(pixel) {
-        var viewerCoordinates = pixel.minus(
-                $.getElementPosition(this.viewer.element));
-        return this.viewerElementToImageCoordinates(viewerCoordinates);
-    },
-    imageToWindowCoordinates: function(pixel) {
-        var viewerCoordinates = this.imageToViewerElementCoordinates(pixel);
-        return viewerCoordinates.plus(
-                $.getElementPosition(this.viewer.element));
     },
     viewportToViewerElementRectangle: function(rectangle) {
         return $.Rect.fromSummits(
@@ -547,16 +455,12 @@ $.Viewport.prototype = {
             this.pixelFromPoint(rectangle.getBottomLeft(), true)
         );
     },
-    imageToViewportZoom: function(imageZoom) {
-        if (this.viewer) {
-            var item = this.viewer.world.getItemAt(0);
-            return item.imageToViewportZoom(imageZoom);
-        }
-        var imageWidth = this._contentSize.x;
-        var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBounds.width;
-        var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
-        return imageZoom * viewportToImageZoomRatio;
+    riewportToViewerElementRectangle: function(rectangle) {
+        return $.Rect.fromSummits(
+            this.pixelFromPoint(rectangle.getTopLeft(), true),
+            this.pixelFromPoint(rectangle.getTopRight(), true),
+            this.pixelFromPoint(rectangle.getBottomLeft(), true)
+        );
     }
 };
 }( OpenSeadragon ));
