@@ -52,9 +52,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, ajaxHeaders, sour
 };
 $.Tile.prototype = {
 
-    toString: function() {
-        return this.level + "/" + this.x + "_" + this.y;
-    },
     // private
     _hasTransparencyChannel: function() {
         return !!this.context2D || this.url.match('.png');
