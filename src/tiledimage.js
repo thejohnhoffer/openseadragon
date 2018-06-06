@@ -234,17 +234,6 @@ $.TiledImage.prototype = {
     setWidth: function(width, immediately) {
         this._setScale(width, immediately);
     },
-    setClip: function(newClip) {
-
-        if (newClip instanceof $.Rect) {
-            this._clip = newClip.clone();
-        } else {
-            this._clip = null;
-        }
-        this._needsDraw = true;
-
-        this.raiseEvent('clip-change');
-    },
     // private
     _setScale: function(scale, immediately) {
         var sameTarget = (this._scaleSpring.target.value === scale);
