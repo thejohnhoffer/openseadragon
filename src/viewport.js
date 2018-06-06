@@ -441,13 +441,6 @@ $.Viewport.prototype = {
             bounds.getTopLeft()
         );
     },
-    // private
-    _imageToViewportDelta: function( imageX, imageY ) {
-        var scale = this._contentBounds.width;
-        return new $.Point(
-            imageX / this._contentSize.x * scale,
-            imageY / this._contentSize.x * scale);
-    },
     viewportToViewerElementRectangle: function(rectangle) {
         return $.Rect.fromSummits(
             this.pixelFromPoint(rectangle.getTopLeft(), true),
