@@ -54,13 +54,6 @@ $.Drawer.prototype = {
         this.viewer.world.draw();
         return this;
     },
-    destroy: function() {
-        //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
-        this.canvas.width = 1;
-        this.canvas.height = 1;
-        this.sketchCanvas = null;
-        this.sketchContext = null;
-    },
     clear: function() {
         this.canvas.innerHTML = "";
         var viewportSize = this._calculateCanvasSize();
