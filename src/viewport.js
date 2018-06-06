@@ -439,13 +439,6 @@ $.Viewport.prototype = {
             this.pixelFromPoint(rectangle.getTopRight(), true),
             this.pixelFromPoint(rectangle.getBottomLeft(), true)
         );
-    },
-    riewportToViewerElementRectangle: function(rectangle) {
-        return $.Rect.fromSummits(
-            this.pixelFromPoint(rectangle.getTopLeft(), true),
-            this.pixelFromPoint(rectangle.getTopRight(), true),
-            this.pixelFromPoint(rectangle.getBottomLeft(), true)
-        );
     }
 };
 }( OpenSeadragon ));
