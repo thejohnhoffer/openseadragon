@@ -117,33 +117,6 @@ $.Tile.prototype = {
 
         context.restore();
     },
-    getScaleForEdgeSmoothing: function() {
-        var context;
-        if (this.cacheImageRecord) {
-            context = this.cacheImageRecord.getRenderedContext();
-        } else if (this.context2D) {
-            context = this.context2D;
-        } else {
-            return 1;
-        }
-        return context.canvas.width / (this.size.x * $.pixelDensityRatio);
-    },
-    getTranslationForEdgeSmoothing: function(scale, canvasSize, sketchCanvasSize) {
-        // The translation vector must have positive values, otherwise the image goes a bit off
-        // the sketch canvas to the top and left and we must use negative coordinates to repaint it
-        // to the main canvas. In that case, some browsers throw:
-        // INDEX_SIZE_ERR: DOM Exception 1: Index or size was negative, or greater than the allowed value.
-        var x = Math.max(1, Math.ceil((sketchCanvasSize.x - canvasSize.x) / 2));
-        var y = Math.max(1, Math.ceil((sketchCanvasSize.y - canvasSize.y) / 2));
-        return new $.Point(x, y).minus(
-            this.position
-                .times($.pixelDensityRatio)
-                .times(scale || 1)
-                .apply(function(x) {
-                    return x % 1;
-                })
-        );
-    },
     unload: function() {
         if ( this.imgElement && this.imgElement.parentNode ) {
             this.imgElement.parentNode.removeChild( this.imgElement );

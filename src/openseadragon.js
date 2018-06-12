@@ -144,7 +144,6 @@ function OpenSeadragon( options ){
 
             minZoomImageRatio: 0.9, //-> closer to 0 allows zoom out to infinity
             maxZoomPixelRatio: 1.1, //-> higher allows 'over zoom' into pixels
-            smoothTileEdgesMinZoom: 1.1, //-> higher than maxZoomPixelRatio disables it
 
             //COLLECTION VISUALIZATION SETTINGS
             collectionRows: 3,

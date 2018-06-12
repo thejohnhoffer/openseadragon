@@ -59,7 +59,6 @@ $.TiledImage = function( options ) {
         animationTime: $.DEFAULT_SETTINGS.animationTime,
         minZoomImageRatio: $.DEFAULT_SETTINGS.minZoomImageRatio,
         minPixelRatio: $.DEFAULT_SETTINGS.minPixelRatio,
-        smoothTileEdgesMinZoom: $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         ajaxWithCredentials: $.DEFAULT_SETTINGS.ajaxWithCredentials,
     }, options );
 
@@ -771,43 +770,23 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
     var tile = lastDrawn[0];
 
-    var sketchScale;
-    var sketchTranslate;
-
     var zoom = tiledImage.viewport.getZoom(true);
     var imageZoom = tiledImage.viewportToImageZoom(zoom);
 
-    if (lastDrawn.length > 1 &&
-        imageZoom > tiledImage.smoothTileEdgesMinZoom) {
-        // When zoomed in a lot (>100%) the tile edges are visible.
-        // So we have to composite them at ~100% and scale them up together.
-        sketchScale = tile.getScaleForEdgeSmoothing();
-        sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
-            tiledImage._drawer.getCanvasSize(false),
-            tiledImage._drawer.getCanvasSize(true));
-    }
-    var bounds;
-    if (!sketchScale) {
-        // Except when edge smoothing, we only clean the part of the
-        // sketch canvas we are going to use for performance reasons.
-        bounds = tiledImage.viewport.viewportToViewerElementRectangle(
-            tiledImage.getClippedBounds(true))
-            .getIntegerBoundingBox()
-            .times($.pixelDensityRatio);
-    }
+    // We only clean the part of the
+    // sketch canvas we are going to use for performance reasons.
+    var bounds = tiledImage.viewport.viewportToViewerElementRectangle(
+        tiledImage.getClippedBounds(true))
+        .getIntegerBoundingBox()
+        .times($.pixelDensityRatio);
     tiledImage._drawer._clear(true, bounds);
+
     var usedClip = false;
     if ( tiledImage._clip ) {
         tiledImage._drawer.saveContext();
 
         var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
         var clipRect = tiledImage._drawer.viewportToDrawerRectangle(box);
-        if (sketchScale) {
-            clipRect = clipRect.times(sketchScale);
-        }
-        if (sketchTranslate) {
-            clipRect = clipRect.translate(sketchTranslate);
-        }
         tiledImage._drawer.setClip(clipRect);
 
         usedClip = true;
@@ -822,8 +801,6 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.restoreContext();
     }
     tiledImage._drawer.blendSketch({
-        scale: sketchScale,
-        translate: sketchTranslate,
         bounds: bounds
     });
 }

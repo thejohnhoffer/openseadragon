@@ -345,7 +345,6 @@ $.Viewer.prototype = {
                     animationTime: _this.animationTime,
                     minZoomImageRatio: _this.minZoomImageRatio,
                     minPixelRatio: _this.minPixelRatio,
-                    smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
                     ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
                     makeAjaxRequest: queueItem.options.makeAjaxRequest,
                     ajaxHeaders: queueItem.options.ajaxHeaders

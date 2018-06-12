@@ -172,10 +172,6 @@ $.Drawer.prototype = {
         }
         this.context.restore();
     },
-    getCanvasSize: function(sketch) {
-        var canvas = this._getContext(sketch).canvas;
-        return new $.Point(canvas.width, canvas.height);
-    },
     // private
     _calculateCanvasSize: function() {
         var pixelDensityRatio = $.pixelDensityRatio;
