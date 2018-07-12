@@ -1,5 +1,4 @@
 
-
 (function( $ ){
 // private class
 var TileRecord = function( options ) {
@@ -8,28 +7,68 @@ var TileRecord = function( options ) {
 };
 // private class
 var ImageRecord = function(options) {
-    this._image = options.image;
+    this._typedImageData = options.typedImageData;
     this._tiles = [];
 };
 ImageRecord.prototype = {
     destroy: function() {
-        this._image = null;
+        this._typedImageData = null;
         this._renderedContext = null;
         this._tiles = null;
     },
-    getImage: function() {
-        return this._image;
+    getTypedImageData: function() {
+        return this._typedImageData;
+    },
+    getClampedArray: function() {
+        var min = this._typedImageData.min;
+        var max = this._typedImageData.max;
+        var width = this._typedImageData.width;
+        var height = this._typedImageData.height;
+        var typedArray = this._typedImageData.data;
+
+        // Unpack image data into 8-bit RGBA
+        var pixelSize = width * height;
+        var rgbaSize = 4 * pixelSize;
+        var nChannels = typedArray.length / pixelSize;
+        var rgbaArray = new Uint8ClampedArray(rgbaSize);
+      
+        var toByte = function(v) {
+            return Math.round(255 * (v - min) / (max - min));
+        };
+        for (var i = 0; i < rgbaSize; i++) {
+            var color = i % 4;
+            // Alpha is unless explicitly given
+            if (nChannels != 4 && color == 3) {
+                rgbaArray[i] = 255;
+                continue;
+            }
+            // Map input channels to colors
+            if (nChannels == 1 || color < nChannels) {
+                var px = Math.floor(i / 4);
+                var chan = color % nChannels;
+                var value = typedArray[px + chan];
+                rgbaArray[i] = toByte(value);
+            }
+        }
+
+        return new Uint8ClampedArray(rgbaArray);
+    },
+    getImageData: function() {
+        var width = this._typedImageData.width;
+        var height = this._typedImageData.height;
+        return new ImageData(this.getClampedArray(), width, height);
     },
     getRenderedContext: function() {
         if (!this._renderedContext) {
             var canvas = document.createElement( 'canvas' );
-            canvas.width = this._image.width;
-            canvas.height = this._image.height;
+            var imageData = this.getImageData();
+            canvas.width = this._typedImageData.width;
+            canvas.height = this._typedImageData.height;
             this._renderedContext = canvas.getContext('2d');
-            this._renderedContext.drawImage( this._image, 0, 0 );
-            //since we are caching the prerendered image on a canvas
-            //allow the image to not be held in memory
-            this._image = null;
+            this._renderedContext.putImageData(imageData, 0, 0);
+            //since we are caching the prerendered array on a canvas
+            //allow the array to not be held in memory
+            this._typedImageData = null;
         }
         return this._renderedContext;
     },
@@ -64,7 +103,7 @@ $.TileCache.prototype = {
         var imageRecord = this._imagesLoaded[options.tile.cacheKey];
         if (!imageRecord) {
             imageRecord = this._imagesLoaded[options.tile.cacheKey] = new ImageRecord({
-                image: options.image
+                typedImageData: options.typedImageData
             });
             this._imagesLoadedCount++;
         }

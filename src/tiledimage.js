@@ -491,8 +491,8 @@ function updateTile( tiledImage, haveDrawn, drawLevel, x, y, level, levelVisibil
         } else {
             var imageRecord = tiledImage._tileCache.getImageRecord(tile.cacheKey);
             if (imageRecord) {
-                var image = imageRecord.getImage();
-                setTileLoaded(tiledImage, tile, image);
+                var typedImageData = imageRecord.getTypedImageData();
+                setTileLoaded(tiledImage, tile, typedImageData);
             }
         }
     }
@@ -601,16 +601,16 @@ function loadTile( tiledImage, tile, time ) {
         makeAjaxRequest: customAjax,
         ajaxHeaders: tile.ajaxHeaders,
         ajaxWithCredentials: tiledImage.ajaxWithCredentials,
-        callback: function( image, errorMsg, tileRequest ){
-            onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest );
+        callback: function( typedImageData, errorMsg, tileRequest ){
+            onTileLoad( tiledImage, tile, time, typedImageData, errorMsg, tileRequest );
         },
         abort: function() {
             tile.loading = false;
         }
     });
 }
-function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
-    if ( !image ) {
+function onTileLoad( tiledImage, tile, time, typedImageData, errorMsg, tileRequest ) {
+    if ( !typedImageData ) {
 
         tile.loading = false;
         tile.exists = false;
@@ -622,7 +622,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
     }
     var finish = function() {
         var cutoff = tiledImage.source.getClosestLevel();
-        setTileLoaded(tiledImage, tile, image, cutoff, tileRequest);
+        setTileLoaded(tiledImage, tile, typedImageData, cutoff, tileRequest);
     };
     // Check if we're mid-update; this can happen on IE8 because image load events for
     // cached images happen immediately there
@@ -633,7 +633,7 @@ function onTileLoad( tiledImage, tile, time, image, errorMsg, tileRequest ) {
         window.setTimeout( finish, 1);
     }
 }
-function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
+function setTileLoaded(tiledImage, tile, typedImageData, cutoff, tileRequest) {
     var increment = 0;
 
     function getCompletionCallback() {
@@ -647,7 +647,7 @@ function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
             tile.loaded = true;
             if (!tile.context2D) {
                 tiledImage._tileCache.cacheTile({
-                    image: image,
+                    typedImageData: typedImageData,
                     tile: tile,
                     cutoff: cutoff,
                     tiledImage: tiledImage

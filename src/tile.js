@@ -32,7 +32,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, ajaxHeaders, sour
 
     this.imgElement = null;
 
-    this.image = null;
     this.style = null;
 
     this.position = null;
