@@ -78,11 +78,10 @@ $.Drawer.prototype = {
             size.y * $.pixelDensityRatio
         );
     },
-    drawTile: function(tile, scale, translate) {
+    drawTile: function(tile) {
 
         var context = this._getContext();
-        scale = scale || 1;
-        tile.drawCanvas(context, scale, translate);
+        tile.drawCanvas(context);
     },
     _getContext: function() {
         var context = this.context;

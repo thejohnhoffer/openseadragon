@@ -793,7 +793,7 @@ function drawTiles( tiledImage, lastDrawn ) {
     }
     for (var i = lastDrawn.length - 1; i >= 0; i--) {
         tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, sketchScale, sketchTranslate );
+        tiledImage._drawer.drawTile( tile );
         tile.beingDrawn = true;
 
     }

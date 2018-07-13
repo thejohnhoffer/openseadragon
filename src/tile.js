@@ -55,7 +55,7 @@ $.Tile.prototype = {
     _hasTransparencyChannel: function() {
         return !!this.context2D || this.url.match('.png');
     },
-    drawCanvas: function( context, scale, translate ) {
+    drawCanvas: function( context ) {
         var position = this.position.times($.pixelDensityRatio),
             size = this.size.times($.pixelDensityRatio),
             rendered;
@@ -71,15 +71,6 @@ $.Tile.prototype = {
         }
         context.save();
 
-        if (typeof scale === 'number' && scale !== 1) {
-            // draw tile at a different scale
-            position = position.times(scale);
-            size = size.times(scale);
-        }
-        if (translate instanceof $.Point) {
-            // shift tile position slightly
-            position = position.plus(translate);
-        }
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way

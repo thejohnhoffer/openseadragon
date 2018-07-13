@@ -1,3 +1,5 @@
+
+
 (function($){
 
   var readResponseArray = function(response) {
@@ -66,7 +68,7 @@ ImageJob.prototype = {
             responseType: "arraybuffer",
             success: function(request) {
 
-                self.typedImageData.data = readResponseArray(request.response);
+                self.typedImageData = readResponseArray(request.response);
 
                 // If empty consider the image load a failure.
                 if (self.typedImageData.data.length === 0) {
