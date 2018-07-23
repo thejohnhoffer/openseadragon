@@ -25,6 +25,8 @@ module.exports = function(grunt) {
         releaseRoot = "../site-build/built-openseadragon/",
         coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
+            "lib/pako.js",
+            "lib/UPNG.js",
             "src/openseadragon.js",
             "src/fullscreen.js",
             "src/eventsource.js",
