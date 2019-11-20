@@ -270,7 +270,6 @@ $.Drawer.prototype = {
                     var sketchCanvasSize = this._calculateSketchCanvasSize();
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
-                    // TODO fix if webgl2
                     this._updateImageSmoothingEnabled(this.sketchContext);
                 }
             }
@@ -282,9 +281,10 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        // TODO fix for webgl2
         var context = this._getContext(useSketch);
-        if (bounds) {
+        if (this.useWebGL) {
+            this.webGlDrawer.clear(); // TODO bounds?
+        } else if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
             var canvas = context.canvas;
@@ -321,27 +321,32 @@ $.Drawer.prototype = {
      */
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
         // TODO asserts
-        for (var i = tiles.length - 1; i >= 0; i--) {
-            var tile = tiles[ i ];
-            tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
-            tile.beingDrawn = true;
+        if ( this.useWebGL) {
+            this.webGlDrawer.draw();
+            // TODO fire event
+        } else {
+            for (var i = tiles.length - 1; i >= 0; i--) {
+                var tile = tiles[ i ];
+                tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
+                tile.beingDrawn = true;
 
-            if( tiledImage.viewer ){
-                /**
-                 * <em>- Needs documentation -</em>
-                 *
-                 * @event tile-drawn
-                 * @memberof OpenSeadragon.Viewer
-                 * @type {object}
-                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                 * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                 * @property {OpenSeadragon.Tile} tile
-                 * @property {?Object} userData - Arbitrary subscriber-defined object.
-                 */
-                tiledImage.viewer.raiseEvent( 'tile-drawn', {
-                    tiledImage: tiledImage,
-                    tile: tile
-                });
+                if( tiledImage.viewer ){
+                    /**
+                     * <em>- Needs documentation -</em>
+                     *
+                     * @event tile-drawn
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                     * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                     * @property {OpenSeadragon.Tile} tile
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    tiledImage.viewer.raiseEvent( 'tile-drawn', {
+                        tiledImage: tiledImage,
+                        tile: tile
+                    });
+                }
             }
         }
     },
@@ -399,7 +404,6 @@ $.Drawer.prototype = {
                         self.sketchCanvas.height = sketchCanvasSize.y;
                     });
                 }
-                // TODO fix if webgl2
                 this._updateImageSmoothingEnabled(this.sketchContext);
             }
             context = this.sketchContext;
@@ -412,8 +416,9 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        // TODO webgl2
-        this._getContext( useSketch ).save();
+        if ( !this.useWebGL) {
+            this._getContext( useSketch ).save();
+        }
     },
 
     // private
@@ -421,8 +426,9 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        // TODO webgl2
-        this._getContext( useSketch ).restore();
+        if ( !this.useWebGL) {
+            this._getContext( useSketch ).restore();
+        }
     },
 
     // private
@@ -689,10 +695,14 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
-        context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
-        context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
-        context.imageSmoothingEnabled = this._imageSmoothingEnabled;
+        if (this.useWebGL) {
+            this.webGlDrawer.imageSmoothingEnabled = this._imageSmoothingEnabled;
+        } else {
+            context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
+            context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
+            context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
+            context.imageSmoothingEnabled = this._imageSmoothingEnabled;
+        }
     },
 
     /**

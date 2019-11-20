@@ -41,21 +41,22 @@
  * @param {Object} options - Options for this WebGlDrawer.
  */
 $.WebGlDrawer = function( options ) {
-    // TODO image smooting?
+    // TODO image smooting
+    this.imageSmoothing = true;
 
-    this.canvas = document.creareElement( "canvas" );
+    this.canvas = document.createElement( "canvas" );
 
     this.gl = this.canvas.getContext( "webgl2" );
     $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
 
     this.vertexShaderSource = "              \
-        attribute vec4 aVertesPos;          \
+        attribute vec4 aVertexPos;          \
         attribute vec2 aTextureCoord;       \
                                             \
         varying highp vec2 vTextureCoord;   \
                                             \
         void main(void) {                   \
-            gl_Position = sVertexPos;       \
+            gl_Position = aVertexPos;       \
             vTextureCoord = aTextureCoord;  \
         }                                   \
     ";
@@ -108,8 +109,7 @@ $.WebGlDrawer.prototype = {
 
         this.clear();
 
-
-        var numComponents = 3;
+        var numComponents = 2;
         var type = this.gl.FLOAT;
         var normalize = false;
         var stride = 0;
@@ -124,7 +124,7 @@ $.WebGlDrawer.prototype = {
             offset);
         this.gl.enableVertexAttribArray(this.vertexPos);
 
-        numComponents = 3;
+        numComponents = 2;
         type = this.gl.FLOAT;
         normalize = false;
         stride = 0;
@@ -142,14 +142,13 @@ $.WebGlDrawer.prototype = {
 
         this.gl.useProgram(this.program);
 
-        this.gl.activateTexture(this.gl.TEXTURE0);
+        this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-        this.gl.uniformi(this.sampler, 0);
+        this.gl.uniform1i(this.sampler, 0);
 
         var vertexCount = 4;
-        type = this.gl.UNSIGNED_SHORT;
         offset = 0;
-        this.gl.drawElements(this.gl.TRIANGLES, vertexCount, type, offset);
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
 
     },
 
@@ -157,8 +156,8 @@ $.WebGlDrawer.prototype = {
 
     },
 
-    _loadShader: function(type, source) {
-        var shader = this.gl.creteShader(type);
+    _loadShader: function(source, type) {
+        var shader = this.gl.createShader(type);
         this.gl.shaderSource(shader, source);
         this.gl.compileShader(shader);
         if ( !this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS) ) {
@@ -189,6 +188,8 @@ $.WebGlDrawer.prototype = {
     _createBuffer: function(data) {
         var buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+        // TODO ES6?
+        // eslint-disable-next-line no-undef
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
         return buffer;
     },
@@ -203,6 +204,8 @@ $.WebGlDrawer.prototype = {
         var border = 0;
         var format = this.gl.RGBA;
         var type = this.gl.UNSIGNED_BYTE;
+        // TODO ES&?
+        // eslint-disable-next-line no-undef
         var data = new Uint8Array([
             255, 0, 0, 255,
             255, 0, 0, 255,
