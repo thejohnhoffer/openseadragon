@@ -309,7 +309,7 @@ $.Drawer.prototype = {
      */
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
         for (var i = tiles.length - 1; i >= 0; i--) {
-            tile = tiles[ i ];
+            var tile = tiles[ i ];
             tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
             tile.beingDrawn = true;
 
@@ -364,7 +364,7 @@ $.Drawer.prototype = {
                 var sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
-                this.sketchContext = this.sketchCanvas.getContext( $.supportsWebGL2 ? "webgl2" :  "2d" );
+                this.sketchContext = this.sketchCanvas.getContext( $.supportsWebGL2 ? "webgl2" : "2d" );
 
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
