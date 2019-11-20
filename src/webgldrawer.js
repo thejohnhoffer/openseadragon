@@ -43,14 +43,177 @@
 $.WebGlDrawer = function( options ) {
     // TODO image smooting?
 
+    this.canvas = document.creareElement( "canvas" );
+
+    this.gl = this.canvas.getContext( "webgl2" );
+    $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
+
+    this.vertexShaderSource = "              \
+        attribute vec4 aVertesPos;          \
+        attribute vec2 aTextureCoord;       \
+                                            \
+        varying highp vec2 vTextureCoord;   \
+                                            \
+        void main(void) {                   \
+            gl_Position = sVertexPos;       \
+            vTextureCoord = aTextureCoord;  \
+        }                                   \
+    ";
+
+    this.fragmentShaderSource = "                                    \
+        varying highp vec2 vTextureCoord;                           \
+                                                                    \
+        uniform sampler2D uSampler;                                 \
+                                                                    \
+        void main(void) {                                           \
+            gl_FragColor = texture2D(uSampler, vTextureCoord);      \
+        }                                                           \
+    ";
+
+    this.program = this._loadProgram();
+
+    this.vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
+
+    this.textureCoord = this.gl.getAttribLocation(this.program, "aTextureCoord");
+
+    this.sampler = this.gl.getUniformLocation(this.program, "uSampler");
+
+    this.vertexBuffer = this._createBuffer([
+        -1.0, -1.0,
+        1.0, -1.0,
+        1.0, 1.0,
+        -1.0, 1.0
+    ]);
+
+    this.textureCoordBuffer = this._createBuffer([
+        0.0, 0.0,
+        1.0, 0.0,
+        1.0, 1.0,
+        0.0, 1.0
+    ]);
 
 };
 
 /** @lends OpenSeadragon.WebGlDrawer.prototype */
 $.WebGlDrawer.prototype = {
 
+    clear: function() {
+        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        this.gl.clearDepth(1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    },
+
+    draw: function( tiles ) {
+        var texture = this._loadTexture({});
+
+        this.clear();
+
+
+        var numComponents = 3;
+        var type = this.gl.FLOAT;
+        var normalize = false;
+        var stride = 0;
+        var offset = 0;
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.gl.vertexAttribPointer(
+            this.vertexPos,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        this.gl.enableVertexAttribArray(this.vertexPos);
+
+        numComponents = 3;
+        type = this.gl.FLOAT;
+        normalize = false;
+        stride = 0;
+        offset = 0;
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
+        this.gl.vertexAttribPointer(
+            this.textureCoord,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        this.gl.enableVertexAttribArray(this.textureCoord);
+
+
+        this.gl.useProgram(this.program);
+
+        this.gl.activateTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.uniformi(this.sampler, 0);
+
+        var vertexCount = 4;
+        type = this.gl.UNSIGNED_SHORT;
+        offset = 0;
+        this.gl.drawElements(this.gl.TRIANGLES, vertexCount, type, offset);
+
+    },
+
     destroy: function() {
 
+    },
+
+    _loadShader: function(type, source) {
+        var shader = this.gl.creteShader(type);
+        this.gl.shaderSource(shader, source);
+        this.gl.compileShader(shader);
+        if ( !this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS) ) {
+            $.console.error( "[WebGlDrawer] failed to compile shader." );
+            this.gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    },
+
+    _loadProgram: function() {
+        var program = this.gl.createProgram();
+
+        var vertexShader = this._loadShader(this.vertexShaderSource, this.gl.VERTEX_SHADER);
+        var fragmentShader = this._loadShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
+
+        this.gl.attachShader(program, vertexShader);
+        this.gl.attachShader(program, fragmentShader);
+        this.gl.linkProgram(program);
+
+        if ( !this.gl.getProgramParameter(program, this.gl.LINK_STATUS) ) {
+            $.console.error( "[WebGlDrawer] failed to link shader program." );
+            return null;
+        }
+        return program;
+    },
+
+    _createBuffer: function(data) {
+        var buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
+        return buffer;
+    },
+
+    _loadTexture: function( source ) {
+        var texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+        var level = 0;
+        var width = 2;
+        var height = 2;
+        var border = 0;
+        var format = this.gl.RGBA;
+        var type = this.gl.UNSIGNED_BYTE;
+        var data = new Uint8Array([
+            255, 0, 0, 255,
+            255, 0, 0, 255,
+            0, 255, 0, 255,
+            0, 255, 0, 255
+        ]);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, level, format, width, height, border, format, type, data);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        return texture;
     }
 };
 

@@ -75,6 +75,9 @@ $.Drawer = function( options ) {
     }
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
+
+    this.useWebGL  = $.supportsWebGL2 && this.useCanvas;
+
     /**
      * The parent element of this Drawer instance, passed in when the Drawer was created.
      * The parent of {@link OpenSeadragon.Drawer#canvas}.
@@ -101,7 +104,7 @@ $.Drawer = function( options ) {
      * @member {OpenSeadragon.webGlDrawer}
      * @memberof OpenSeadragon.Drawer#
      */
-    this.webGlDrawer = $.supportsWebGL2 ? new $.WebGlDrawer({}) : null;
+    this.webGlDrawer = this.useWebGL ? new $.WebGlDrawer() : null;
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
      * to the main canvas due to opacity. Lazily initialized.
@@ -370,11 +373,16 @@ $.Drawer.prototype = {
         var context = this.context;
         if ( useSketch ) {
             if (this.sketchCanvas === null) {
-                this.sketchCanvas = document.createElement( "canvas" );
+                if (this.useWebGL) {
+                    this.sketchCanvas = this.webGlDrawer.canvas;
+                    this.sketchContext = this.webGlDrawer.gl;
+                } else {
+                    this.sketchCanvas = document.createElement( "canvas" );
+                    this.sketchContext = this.sketchCanvas.getContext( "2d" );
+                }
                 var sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
-                this.sketchContext = this.sketchCanvas.getContext( $.supportsWebGL2 ? "webgl2" : "2d" );
 
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
