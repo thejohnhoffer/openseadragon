@@ -59,7 +59,8 @@ module.exports = function(grunt) {
             "src/viewport.js",
             "src/tiledimage.js",
             "src/tilecache.js",
-            "src/world.js"
+            "src/world.js",
+            "src/webgldrawer.js"
         ];
 
     var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +

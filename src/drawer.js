@@ -97,6 +97,12 @@ $.Drawer = function( options ) {
     this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
 
     /**
+     * Handler for drawing tiles using WebGL2 if the browser supports it.
+     * @member {OpenSeadragon.webGlDrawer}
+     * @memberof OpenSeadragon.Drawer#
+     */
+    this.webGlDrawer = $.supportsWebGL2 ? new $.WebGlDrawer({}) : null;
+    /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
      * to the main canvas due to opacity. Lazily initialized.
      */
@@ -240,6 +246,9 @@ $.Drawer.prototype = {
         this.canvas.height = 1;
         this.sketchCanvas = null;
         this.sketchContext = null;
+        if (this.webGlDrawer) {
+            this.webGlDrawer.destroy();
+        }
     },
 
     /**
@@ -308,6 +317,7 @@ $.Drawer.prototype = {
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
      */
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
+        // TODO asserts
         for (var i = tiles.length - 1; i >= 0; i--) {
             var tile = tiles[ i ];
             tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
