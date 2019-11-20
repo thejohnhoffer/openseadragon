@@ -258,6 +258,7 @@ $.Drawer.prototype = {
                     var sketchCanvasSize = this._calculateSketchCanvasSize();
                     this.sketchCanvas.width = sketchCanvasSize.x;
                     this.sketchCanvas.height = sketchCanvasSize.y;
+                    // TODO fix if webgl2
                     this._updateImageSmoothingEnabled(this.sketchContext);
                 }
             }
@@ -269,6 +270,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
+        // TODO fix for webgl2
         var context = this._getContext(useSketch);
         if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -294,6 +296,41 @@ $.Drawer.prototype = {
             size.x * $.pixelDensityRatio,
             size.y * $.pixelDensityRatio
         );
+    },
+
+    /**
+     * Draws the given tiles.
+     * @param {OpenSeadragon.Tile[]} tiles - The tiles to draw.
+     * @param {OpenSeadragon.tiledImage} tiledImage - The image that holds the tiles
+     * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
+     * where <code>rendered</code> is the context with the pre-drawn image.
+     * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
+     * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
+     */
+    drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
+        for (var i = tiles.length - 1; i >= 0; i--) {
+            tile = tiles[ i ];
+            tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
+            tile.beingDrawn = true;
+
+            if( tiledImage.viewer ){
+                /**
+                 * <em>- Needs documentation -</em>
+                 *
+                 * @event tile-drawn
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                 * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                 * @property {OpenSeadragon.Tile} tile
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                tiledImage.viewer.raiseEvent( 'tile-drawn', {
+                    tiledImage: tiledImage,
+                    tile: tile
+                });
+            }
+        }
     },
 
     /**
@@ -327,7 +364,7 @@ $.Drawer.prototype = {
                 var sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
-                this.sketchContext = this.sketchCanvas.getContext( "2d" );
+                this.sketchContext = this.sketchCanvas.getContext( $.supportsWebGL2 ? "webgl2" :  "2d" );
 
                 // If the viewport is not currently rotated, the sketchCanvas
                 // will have the same size as the main canvas. However, if
@@ -344,6 +381,7 @@ $.Drawer.prototype = {
                         self.sketchCanvas.height = sketchCanvasSize.y;
                     });
                 }
+                // TODO fix if webgl2
                 this._updateImageSmoothingEnabled(this.sketchContext);
             }
             context = this.sketchContext;
@@ -356,7 +394,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-
+        // TODO webgl2
         this._getContext( useSketch ).save();
     },
 
@@ -365,7 +403,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-
+        // TODO webgl2
         this._getContext( useSketch ).restore();
     },
 
@@ -374,7 +412,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-
+        // TODO webgl2
         var context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
@@ -386,7 +424,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-
+        // TODO webgl2
         var context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;

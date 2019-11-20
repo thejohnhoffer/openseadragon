@@ -1846,7 +1846,8 @@ function drawTiles( tiledImage, lastDrawn ) {
         useSketch = tiledImage.opacity < 1 ||
             (tiledImage.compositeOperation &&
                 tiledImage.compositeOperation !== 'source-over') ||
-            (!tiledImage._isBottomItem() && tile._hasTransparencyChannel());
+            (!tiledImage._isBottomItem() && tile._hasTransparencyChannel()) ||
+            $.supportsWebGL2;
     }
 
     var sketchScale;
@@ -1952,29 +1953,7 @@ function drawTiles( tiledImage, lastDrawn ) {
         tiledImage._drawer.drawRectangle(placeholderRect, fillStyle, useSketch);
     }
 
-    for (var i = lastDrawn.length - 1; i >= 0; i--) {
-        tile = lastDrawn[ i ];
-        tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, sketchScale, sketchTranslate );
-        tile.beingDrawn = true;
-
-        if( tiledImage.viewer ){
-            /**
-             * <em>- Needs documentation -</em>
-             *
-             * @event tile-drawn
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-             * @property {OpenSeadragon.Tile} tile
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            tiledImage.viewer.raiseEvent( 'tile-drawn', {
-                tiledImage: tiledImage,
-                tile: tile
-            });
-        }
-    }
+    tiledImage._drawer.drawTiles( lastDrawn, tiledImage, useSketch, sketchScale, sketchTranslate );
 
     if ( usedClip ) {
         tiledImage._drawer.restoreContext( useSketch );
