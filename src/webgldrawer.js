@@ -41,6 +41,8 @@
  * @param {Object} options - Options for this WebGlDrawer.
  */
 $.WebGlDrawer = function( options ) {
+    // TODO tile.drawingHandler?
+    // TODO global alpha
     // TODO image smooting
     this.imageSmoothing = true;
 
@@ -105,9 +107,18 @@ $.WebGlDrawer.prototype = {
     },
 
     draw: function( tiles ) {
-        var texture = this._loadTexture({});
-
         this.clear();
+
+        // for (var i = tiles.length - 1; i >= 0; i--) {
+        //     var tile = tiles[i];
+        //     this.drawTile(tile);
+        // }
+
+        this.drawTile(tiles[0]);
+    },
+
+    drawTile: function( tile ) {
+        var texture = this._loadTexture(tile);
 
         var numComponents = 2;
         var type = this.gl.FLOAT;
@@ -194,25 +205,27 @@ $.WebGlDrawer.prototype = {
         return buffer;
     },
 
-    _loadTexture: function( source ) {
+    _loadTexture: function( tile ) {
         var texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
+        var context = tile.getContext();
+        var bounds = tile.limitSourceBounds(context.canvas);
         var level = 0;
-        var width = 2;
-        var height = 2;
+        var width = bounds.width;
+        var height = bounds.height;
         var border = 0;
         var format = this.gl.RGBA;
         var type = this.gl.UNSIGNED_BYTE;
-        // TODO ES&?
-        // eslint-disable-next-line no-undef
-        var data = new Uint8Array([
-            255, 0, 0, 255,
-            255, 0, 0, 255,
-            0, 255, 0, 255,
-            0, 255, 0, 255
-        ]);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, level, format, width, height, border, format, type, data);
+        this.gl.texImage2D(this.gl.TEXTURE_2D,
+            level,
+            format,
+            width,
+            height,
+            border,
+            format,
+            type,
+            context.canvas);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);

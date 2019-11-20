@@ -77,6 +77,7 @@ $.Drawer = function( options ) {
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
 
     this.useWebGL  = $.supportsWebGL2 && this.useCanvas;
+    // this.useWebGL = false;
 
     /**
      * The parent element of this Drawer instance, passed in when the Drawer was created.
@@ -116,7 +117,7 @@ $.Drawer = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Drawer#
      * @deprecated Alias for {@link OpenSeadragon.Drawer#container}.
-     */
+    //  */
     this.element    = this.container;
 
     // We force our container to ltr because our drawing math doesn't work in rtl.
@@ -321,8 +322,9 @@ $.Drawer.prototype = {
      */
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
         // TODO asserts
+        scale = scale || 1;
         if ( this.useWebGL) {
-            this.webGlDrawer.draw();
+            this.webGlDrawer.draw(tiles);
             // TODO fire event
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {
@@ -367,7 +369,6 @@ $.Drawer.prototype = {
 
         if (this.useCanvas) {
             var context = this._getContext(useSketch);
-            scale = scale || 1;
             tile.drawCanvas(context, drawingHandler, scale, translate);
         } else {
             tile.drawHTML( this.canvas );

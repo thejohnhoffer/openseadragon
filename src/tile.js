@@ -299,6 +299,60 @@ $.Tile.prototype = {
         $.setElementOpacity( this.element, this.opacity );
     },
 
+    getContext: function() {
+        var rendered;
+
+        if (!this.context2D && !this.cacheImageRecord) {
+            $.console.warn(
+                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
+                this.toString());
+            return null;
+        }
+
+        rendered = this.context2D || this.cacheImageRecord.getRenderedContext();
+
+        if ( !this.loaded || !rendered ){
+            $.console.warn(
+                "Attempting to draw tile %s when it's not yet loaded.",
+                this.toString()
+            );
+
+            return null;
+        }
+        return rendered;
+    },
+
+    getDestinationRect: function(scale, translate) {
+        var position = this.position.times($.pixelDensityRatio);
+        var size     = this.size.times($.pixelDensityRatio);
+        if (typeof scale === 'number' && scale !== 1) {
+            // draw tile at a different scale
+            position = position.times(scale);
+            size = size.times(scale);
+        }
+        if (translate instanceof $.Point) {
+            // shift tile position slightly
+            position = position.plus(translate);
+        }
+        return new $.Rect(
+            position.x,
+            position.y,
+            size.x,
+            size.y);
+    },
+
+    limitSourceBounds: function( canvas ) {
+        var sourceWidth, sourceHeight;
+        if (this.sourceBounds) {
+            sourceWidth = Math.min(this.sourceBounds.width, canvas.width);
+            sourceHeight = Math.min(this.sourceBounds.height, canvas.height);
+        } else {
+            sourceWidth = canvas.width;
+            sourceHeight = canvas.height;
+        }
+        return new $.Rect(0, 0, sourceWidth, sourceHeight);
+    },
+
     /**
      * Renders the tile in a canvas-based context.
      * @function
@@ -311,42 +365,13 @@ $.Tile.prototype = {
      */
     drawCanvas: function( context, drawingHandler, scale, translate ) {
 
-        var position = this.position.times($.pixelDensityRatio),
-            size     = this.size.times($.pixelDensityRatio),
-            rendered;
+        var destRect = this.getDestinationRect(scale, translate);
 
-        if (!this.context2D && !this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
-                this.toString());
-            return;
-        }
-
-        rendered = this.context2D || this.cacheImageRecord.getRenderedContext();
-
-        if ( !this.loaded || !rendered ){
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
-
-            return;
-        }
+        var rendered = this.getContext();
 
         context.save();
 
         context.globalAlpha = this.opacity;
-
-        if (typeof scale === 'number' && scale !== 1) {
-            // draw tile at a different scale
-            position = position.times(scale);
-            size = size.times(scale);
-        }
-
-        if (translate instanceof $.Point) {
-            // shift tile position slightly
-            position = position.plus(translate);
-        }
 
         //if we are supposed to be rendering fully opaque rectangle,
         //ie its done fading or fading is turned off, and if we are drawing
@@ -356,10 +381,10 @@ $.Tile.prototype = {
             //clearing only the inside of the rectangle occupied
             //by the png prevents edge flikering
             context.clearRect(
-                position.x,
-                position.y,
-                size.x,
-                size.y
+                destRect.x,
+                destRect.y,
+                destRect.width,
+                destRect.height
             );
         }
 
@@ -367,25 +392,18 @@ $.Tile.prototype = {
         // changes as we are rendering the image
         drawingHandler({context: context, tile: this, rendered: rendered});
 
-        var sourceWidth, sourceHeight;
-        if (this.sourceBounds) {
-            sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);
-            sourceHeight = Math.min(this.sourceBounds.height, rendered.canvas.height);
-        } else {
-            sourceWidth = rendered.canvas.width;
-            sourceHeight = rendered.canvas.height;
-        }
+        var bounds = this.limitSourceBounds(rendered.canvas);
 
         context.drawImage(
             rendered.canvas,
-            0,
-            0,
-            sourceWidth,
-            sourceHeight,
-            position.x,
-            position.y,
-            size.x,
-            size.y
+            bounds.x,
+            bounds.y,
+            bounds.width,
+            bounds.height,
+            destRect.x,
+            destRect.y,
+            destRect.width,
+            destRect.height
         );
 
         context.restore();
