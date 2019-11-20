@@ -901,6 +901,17 @@ function OpenSeadragon( options ){
     }());
 
     /**
+     * True if the browser supports WebGL2 (a.k.a. OPenGL ES 3.0)
+     * @member {Boolean} supportsWebGL2
+     * @memberof OpenSeadragon
+     */
+    $.supportsWebGL2 = (function() {
+        var canvasElement = document.createElement( 'canvas' );
+        return !!( $.isFunction( canvasElement.getContext ) &&
+                    canvasElement.getContext( 'webgl2' ) );
+    }());
+
+    /**
      * Test whether the submitted canvas is tainted or not.
      * @argument {Canvas} canvas The canvas to test.
      * @returns {Boolean} True if the canvas is tainted.
