@@ -324,7 +324,7 @@ $.Drawer.prototype = {
         // TODO asserts
         scale = scale || 1;
         if ( this.useWebGL) {
-            this.webGlDrawer.draw(tiles);
+            this.webGlDrawer.draw(tiles, scale, translate);
             // TODO fire event
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {

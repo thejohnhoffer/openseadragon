@@ -52,13 +52,13 @@ $.WebGlDrawer = function( options ) {
     $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
 
     this.vertexShaderSource = "              \
-        attribute vec4 aVertexPos;          \
+        attribute vec2 aVertexPos;          \
         attribute vec2 aTextureCoord;       \
                                             \
         varying highp vec2 vTextureCoord;   \
                                             \
         void main(void) {                   \
-            gl_Position = aVertexPos;       \
+            gl_Position = vec4(aVertexPos, 0.0, 1.0);       \
             vTextureCoord = aTextureCoord;  \
         }                                   \
     ";
@@ -69,10 +69,10 @@ $.WebGlDrawer = function( options ) {
         uniform sampler2D uSampler;                                 \
                                                                     \
         void main(void) {                                           \
-            gl_FragColor = texture2D(uSampler, vTextureCoord);      \
+            gl_FragColor = vec4(vTextureCoord, 0.0, 1.0);      \
         }                                                           \
     ";
-
+//texture2D(uSampler, vTextureCoord);
     this.program = this._loadProgram();
 
     this.vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
@@ -81,19 +81,18 @@ $.WebGlDrawer = function( options ) {
 
     this.sampler = this.gl.getUniformLocation(this.program, "uSampler");
 
-    this.vertexBuffer = this._createBuffer([
-        -1.0, -1.0,
-        1.0, -1.0,
-        1.0, 1.0,
-        -1.0, 1.0
-    ]);
+    this.vertexBuffer = this.gl.createBuffer();
 
-    this.textureCoordBuffer = this._createBuffer([
+    this.textureCoordBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
+    // TODO ES6?
+    // eslint-disable-next-line no-undef
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
         0.0, 0.0,
         1.0, 0.0,
-        1.0, 1.0,
-        0.0, 1.0
-    ]);
+        0.0, 1.0,
+        1.0, 1.0
+    ]), this.gl.STATIC_DRAW);
 
 };
 
@@ -106,7 +105,7 @@ $.WebGlDrawer.prototype = {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     },
 
-    draw: function( tiles ) {
+    draw: function( tiles, scale, translate ) {
         this.clear();
 
         // for (var i = tiles.length - 1; i >= 0; i--) {
@@ -114,10 +113,29 @@ $.WebGlDrawer.prototype = {
         //     this.drawTile(tile);
         // }
 
-        this.drawTile(tiles[0]);
+        this.drawTile(tiles[0], scale, translate);
     },
 
-    drawTile: function( tile ) {
+    drawTile: function( tile, scale, translate ) {
+
+        var dest = tile.getDestinationRect(scale, translate);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        var w = this.canvas.width;
+        var h = this.canvas.height;
+        dest.x = dest.x / w * 2 - 1;
+        dest.y = dest.y / h * 2 - 1;
+        dest.width = dest.width / w * 2;
+        dest.height = dest.height / h * 2;
+        var data = [
+            dest.getBottomLeft().x, dest.getBottomLeft().y,   // lower left
+            dest.getBottomRight().x, dest.getBottomRight().y,  // lower right
+            dest.getTopLeft().x, dest.getTopLeft().y,   // upper left
+            dest.getTopRight().x, dest.getTopRight().y    // upper right
+        ];
+        // TODO ES6?
+        // eslint-disable-next-line no-undef
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.DYNAMIC_DRAW);
+
         var texture = this._loadTexture(tile);
 
         var numComponents = 2;
@@ -149,7 +167,6 @@ $.WebGlDrawer.prototype = {
             stride,
             offset);
         this.gl.enableVertexAttribArray(this.textureCoord);
-
 
         this.gl.useProgram(this.program);
 
