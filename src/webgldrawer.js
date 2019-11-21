@@ -69,10 +69,10 @@ $.WebGlDrawer = function( options ) {
         uniform sampler2D uSampler;                                 \
                                                                     \
         void main(void) {                                           \
-            gl_FragColor = vec4(vTextureCoord, 0.0, 1.0);      \
+            gl_FragColor = texture2D(uSampler, vTextureCoord);      \
         }                                                           \
     ";
-//texture2D(uSampler, vTextureCoord);
+
     this.program = this._loadProgram();
 
     this.vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
@@ -88,10 +88,10 @@ $.WebGlDrawer = function( options ) {
     // TODO ES6?
     // eslint-disable-next-line no-undef
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
-        0.0, 0.0,
-        1.0, 0.0,
         0.0, 1.0,
-        1.0, 1.0
+        1.0, 1.0,
+        0.0, 0.0,
+        1.0, 0.0
     ]), this.gl.STATIC_DRAW);
 
 };
@@ -100,32 +100,32 @@ $.WebGlDrawer = function( options ) {
 $.WebGlDrawer.prototype = {
 
     clear: function() {
-        this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        this.gl.clearDepth(1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        // Called at wrong time? or sketchCanvas paint problems
+        this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     },
 
     draw: function( tiles, scale, translate ) {
         this.clear();
 
-        // for (var i = tiles.length - 1; i >= 0; i--) {
-        //     var tile = tiles[i];
-        //     this.drawTile(tile);
-        // }
+        for (var i = tiles.length - 1; i >= 0; i--) {
+            var tile = tiles[i];
+            this.drawTile(tile);
+        }
 
-        this.drawTile(tiles[0], scale, translate);
     },
 
     drawTile: function( tile, scale, translate ) {
 
         var dest = tile.getDestinationRect(scale, translate);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+
         var w = this.canvas.width;
         var h = this.canvas.height;
         dest.x = dest.x / w * 2 - 1;
-        dest.y = dest.y / h * 2 - 1;
+        dest.y = dest.y / h * -2 + 1;
         dest.width = dest.width / w * 2;
-        dest.height = dest.height / h * 2;
+        dest.height = dest.height / h * -2;
         var data = [
             dest.getBottomLeft().x, dest.getBottomLeft().y,   // lower left
             dest.getBottomRight().x, dest.getBottomRight().y,  // lower right
@@ -133,6 +133,7 @@ $.WebGlDrawer.prototype = {
             dest.getTopRight().x, dest.getTopRight().y    // upper right
         ];
         // TODO ES6?
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
         // eslint-disable-next-line no-undef
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.DYNAMIC_DRAW);
 
