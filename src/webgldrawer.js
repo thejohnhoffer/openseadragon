@@ -49,6 +49,7 @@ $.WebGlDrawer = function( options ) {
     this.canvas = document.createElement( "canvas" );
 
     this.gl = this.canvas.getContext( "webgl2", {
+        // TODO do by yourself, not working in firefox
         premultipliedAlpha: false
     } );
     $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
