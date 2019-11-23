@@ -48,7 +48,9 @@ $.WebGlDrawer = function( options ) {
 
     this.canvas = document.createElement( "canvas" );
 
-    this.gl = this.canvas.getContext( "webgl2" );
+    this.gl = this.canvas.getContext( "webgl2", {
+        premultipliedAlpha: false
+    } );
     $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
 
     this.vertexShaderSource = "              \
@@ -88,11 +90,12 @@ $.WebGlDrawer = function( options ) {
     // TODO ES6?
     // eslint-disable-next-line no-undef
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
-        0.0, 1.0,
-        1.0, 1.0,
-        0.0, 0.0,
-        1.0, 0.0
+        0.0, 1.0,   // lower left
+        1.0, 1.0,   // lower right
+        0.0, 0.0,   // upper left
+        1.0, 0.0    // upper right
     ]), this.gl.STATIC_DRAW);
+    // Data from CanvasRenderingContext2D uses origo as upper left corner
 
 };
 
@@ -123,15 +126,16 @@ $.WebGlDrawer.prototype = {
         var ch = this.canvas.height;
         // dest origo: upper left, 0.0 ... 1.0
         // data origo: lower left, -1.0 ... 1.0
+        // x, y is upper left corner of tile
         var x = dest.x / cw * 2 - 1;
-        var y = dest.y / ch * -2 + 1;
+        var y = -(dest.y / ch * 2 - 1);
         var w = dest.width / cw * 2;
-        var h = dest.height / ch * -2;
+        var h = dest.height / ch * 2;
         var data = [
-            x, y,   // lower left
-            x + w, y,  // lower right
-            x, y + h,   // upper left
-            x + w, y + h    // upper right
+            x, y - h,      // lower left
+            x + w, y - h,  // lower right
+            x, y,          // upper left
+            x + w, y       // upper right
         ];
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);

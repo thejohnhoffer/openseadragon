@@ -424,7 +424,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if ( !this.useWebGL2) {
+        if ( !this.useWebGL) {
             this._getContext( useSketch ).save();
         }
     },
@@ -434,7 +434,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if ( !this.useWebGL2) {
+        if ( !this.useWebGL) {
             this._getContext( useSketch ).restore();
         }
     },
@@ -502,6 +502,7 @@ $.Drawer.prototype = {
         if (compositeOperation) {
             this.context.globalCompositeOperation = compositeOperation;
         }
+        console.log('blend', this.context.globalCompositeOperation, 'alpha', this.context.globalAlpha);
         if (bounds) {
             // Internet Explorer, Microsoft Edge, and Safari have problems
             // when you call context.drawImage with negative x or y
@@ -703,7 +704,7 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        if (this.useWebGL2) {
+        if (this.useWebGL) {
             this.webGlDrawer.imageSmoothingEnabled = this._imageSmoothingEnabled;
         } else {
             context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
