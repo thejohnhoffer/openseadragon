@@ -17,6 +17,7 @@
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
                 useCanvas: true,
+                useWebGL2: true,
                 // defaultZoomLevel: 2,
                 // homeFillsViewer: true,
                 // sequenceMode: true,

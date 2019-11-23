@@ -456,6 +456,9 @@
   * @property {Boolean} [useCanvas=true]
   *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
   *
+  * @property {Boolean} [useWebGL2=true]
+  *     Set to false to not use WebGL2 for image rendering even if WebGL2 is supported.
+  *
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
@@ -1223,6 +1226,7 @@ function OpenSeadragon( options ){
             maxImageCacheCount:     200,
             timeout:                30000,
             useCanvas:              true,  // Use canvas element for drawing if available
+            useWebGL2:              true, // Use webGL2 for drawing if available
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",

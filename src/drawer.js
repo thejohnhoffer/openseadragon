@@ -76,8 +76,7 @@ $.Drawer = function( options ) {
 
     this.useCanvas  = $.supportsCanvas && ( this.viewer ? this.viewer.useCanvas : true );
 
-    this.useWebGL  = $.supportsWebGL2 && this.useCanvas;
-    // this.useWebGL = false;
+    this.useWebGL2  = $.supportsWebGL2 && this.useCanvas && (this.viewer ? this.viewer.useWebGL2 : true);
 
     /**
      * The parent element of this Drawer instance, passed in when the Drawer was created.
@@ -105,7 +104,7 @@ $.Drawer = function( options ) {
      * @member {OpenSeadragon.webGlDrawer}
      * @memberof OpenSeadragon.Drawer#
      */
-    this.webGlDrawer = this.useWebGL ? new $.WebGlDrawer() : null;
+    this.webGlDrawer = this.useWebGL2 ? new $.WebGlDrawer() : null;
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
      * to the main canvas due to opacity. Lazily initialized.
@@ -283,7 +282,7 @@ $.Drawer.prototype = {
             return;
         }
         var context = this._getContext(useSketch);
-        if (this.useWebGL) {
+        if (this.useWebGL2) {
             this.webGlDrawer.clear(); // TODO bounds?
         } else if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -291,7 +290,7 @@ $.Drawer.prototype = {
             var canvas = context.canvas;
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
-        if (this.useWebGL || this.useSketch) {
+        if (this.useWebGL2 || this.useSketch) {
             if (bounds) {
                 this.context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
             } else {
@@ -331,7 +330,7 @@ $.Drawer.prototype = {
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
         // TODO asserts
         scale = scale || 1;
-        if ( this.useWebGL) {
+        if ( this.useWebGL2) {
             this.webGlDrawer.draw(tiles, scale, translate);
             // TODO fire event
         } else {
@@ -387,7 +386,7 @@ $.Drawer.prototype = {
         var context = this.context;
         if ( useSketch ) {
             if (this.sketchCanvas === null) {
-                if (this.useWebGL) {
+                if (this.useWebGL2) {
                     this.sketchCanvas = this.webGlDrawer.canvas;
                     this.sketchContext = this.webGlDrawer.gl;
                 } else {
@@ -425,7 +424,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if ( !this.useWebGL) {
+        if ( !this.useWebGL2) {
             this._getContext( useSketch ).save();
         }
     },
@@ -435,7 +434,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if ( !this.useWebGL) {
+        if ( !this.useWebGL2) {
             this._getContext( useSketch ).restore();
         }
     },
@@ -704,7 +703,7 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        if (this.useWebGL) {
+        if (this.useWebGL2) {
             this.webGlDrawer.imageSmoothingEnabled = this._imageSmoothingEnabled;
         } else {
             context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
