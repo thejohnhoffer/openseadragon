@@ -100,14 +100,13 @@ $.WebGlDrawer = function( options ) {
 $.WebGlDrawer.prototype = {
 
     clear: function() {
-        // Called at wrong time? or sketchCanvas paint problems
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     },
 
     draw: function( tiles, scale, translate ) {
-        this.clear();
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
         for (var i = tiles.length - 1; i >= 0; i--) {
             var tile = tiles[i];
@@ -132,6 +131,7 @@ $.WebGlDrawer.prototype = {
             dest.getTopLeft().x, dest.getTopLeft().y,   // upper left
             dest.getTopRight().x, dest.getTopRight().y    // upper right
         ];
+
         // TODO ES6?
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
         // eslint-disable-next-line no-undef
