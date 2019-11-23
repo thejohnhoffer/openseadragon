@@ -291,6 +291,14 @@ $.Drawer.prototype = {
             var canvas = context.canvas;
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
+        if (this.useWebGL || this.useSketch) {
+            if (bounds) {
+                this.context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
+            } else {
+                var mainCanvas = this.context.canvas;
+                this.context.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            }
+        }
     },
 
     /**
