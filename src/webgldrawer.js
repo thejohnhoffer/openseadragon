@@ -119,21 +119,23 @@ $.WebGlDrawer.prototype = {
 
         var dest = tile.getDestinationRect(scale, translate);
 
-        var w = this.canvas.width;
-        var h = this.canvas.height;
-        dest.x = dest.x / w * 2 - 1;
-        dest.y = dest.y / h * -2 + 1;
-        dest.width = dest.width / w * 2;
-        dest.height = dest.height / h * -2;
+        var cw = this.canvas.width;
+        var ch = this.canvas.height;
+        // dest origo: upper left, 0.0 ... 1.0
+        // data origo: lower left, -1.0 ... 1.0
+        var x = dest.x / cw * 2 - 1;
+        var y = dest.y / ch * -2 + 1;
+        var w = dest.width / cw * 2;
+        var h = dest.height / ch * -2;
         var data = [
-            dest.getBottomLeft().x, dest.getBottomLeft().y,   // lower left
-            dest.getBottomRight().x, dest.getBottomRight().y,  // lower right
-            dest.getTopLeft().x, dest.getTopLeft().y,   // upper left
-            dest.getTopRight().x, dest.getTopRight().y    // upper right
+            x, y,   // lower left
+            x + w, y,  // lower right
+            x, y + h,   // upper left
+            x + w, y + h    // upper right
         ];
 
-        // TODO ES6?
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        // TODO ES6?
         // eslint-disable-next-line no-undef
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.DYNAMIC_DRAW);
 
