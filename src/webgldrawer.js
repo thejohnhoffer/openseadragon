@@ -54,6 +54,7 @@ $.WebGlDrawer = function( options ) {
     } );
     $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
 
+    // return vertex position only
     this.vertexShaderSource = "              \
         attribute vec2 aVertexPos;          \
         attribute vec2 aTextureCoord;       \
@@ -65,6 +66,16 @@ $.WebGlDrawer = function( options ) {
             vTextureCoord = aTextureCoord;  \
         }                                   \
     ";
+
+    // Get current viewport position
+    // Find all four adjacent tiles
+    // For each tile
+    //      Sample tile texture
+    //      Sample tile mask
+    //      Multiply
+    // Add all tile color and alpha
+    // Add all tile mask values
+    // Divide color and alpha with summed mask value
 
     this.fragmentShaderSource = "                                    \
         varying highp vec2 vTextureCoord;                           \
@@ -117,6 +128,13 @@ $.WebGlDrawer.prototype = {
             this.drawTile(tile);
         }
 
+        // Create texture array with all tile textures
+        // Create texture array with tile masks
+        // Create data structure with tile positions
+        // Bind data structure to a buffer in fragment shader (how?)
+        // Vertex buffer contains four corners of viewport
+        // Create sampler for tile textures
+        // Create sampler for tile masks
     },
 
     drawTile: function( tile, scale, translate ) {
