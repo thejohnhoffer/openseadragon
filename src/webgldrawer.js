@@ -97,6 +97,7 @@ $.WebGlDrawer = function( options ) {
             color = texture(uSampler, vec3(vTextureCoord, uTile));      \
         }                                                           \
     ";
+    // texture(uSampler, vec3(vTextureCoord, uTile));
 
     this.program = this._loadProgram();
 
@@ -179,6 +180,16 @@ $.WebGlDrawer.prototype = {
                 offset);
             this.gl.enableVertexAttribArray(this.vertexPos);
 
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
+            this.gl.vertexAttribPointer(
+                this.textureCoord,
+                numComponents,
+                type,
+                normalize,
+                stride,
+                offset);
+            this.gl.enableVertexAttribArray(this.textureCoord);
+
             this.gl.useProgram(this.program);
 
             this.gl.uniform2i(this.uSize, this.canvas.width, this.canvas.height);
@@ -252,7 +263,7 @@ $.WebGlDrawer.prototype = {
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
 
         for (var i = 0; i < tiles.length; i++) {
-            var tile = tiles[0];
+            var tile = tiles[i];
             var context = tile.getContext();
             var bounds = tile.limitSourceBounds(context.canvas);
             var level = 0;
@@ -270,7 +281,6 @@ $.WebGlDrawer.prototype = {
                 this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, format2, width, height, tiles.length);
             }
 
-             // eslint-disable-next-line no-undef
             this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
         }
 
