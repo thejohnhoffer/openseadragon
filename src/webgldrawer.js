@@ -91,15 +91,14 @@ $.WebGlDrawer = function( options ) {
         in highp vec2 vTextureCoord;                  \
         out vec4 color;                                         \
         uniform ivec2 uSize;                                          \
-        uniform int uTile;                                           \
         uniform sampler2DArray uTextureSampler;                            \
-        uniform usampler2D uTileSampler;                            \
-                                                                    \
-        void main(void) {                                             \
-            ivec2 c = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
-            uint d =  uvec4(texelFetch(uTileSampler, ivec2(2, 2), 0)).x;          \
-            color = vec4(float(d) / 255.0, 0.0, 0.0, 1.0);      \
-        }                                                           \
+        uniform usampler2D uTileSampler;                                  \
+                                                                           \
+        void main(void) {                                                  \
+            ivec2 coord = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
+            uint tile =  uvec4(texelFetch(uTileSampler, coord, 0)).x;                 \
+            color = texture(uTextureSampler, vec3(vTextureCoord, 0));                           \
+        }                                                                             \
     ";
 
     this.program = this._loadProgram();
@@ -145,8 +144,8 @@ $.WebGlDrawer.prototype = {
 
         this.gl.useProgram(this.program);
 
-        // this._loadTexture(tiles);
-        var texture = this._loadTilePositionTexture(tiles);
+        var texture = this._loadTexture(tiles);
+        var textureTileNbr = this._loadTilePositionTexture(tiles);
 
         var data = [
             -1, -1,      // lower left
@@ -174,77 +173,19 @@ $.WebGlDrawer.prototype = {
             offset);
         this.gl.enableVertexAttribArray(this.vertexPos);
 
-        // this.gl.uniform2i(this.uSize, this.canvas.width, this.canvas.height);
-        // this.gl.uniform1i(this.uTile, 0);
-        // this.gl.uniform1i(this.textureSampler, 0);
-        this.gl.uniform1i(this.tileSampler, 0);
+        this.gl.uniform2i(this.uSize, this.canvas.width, this.canvas.height);
+        this.gl.uniform1i(this.textureSampler, 0);
+        this.gl.uniform1i(this.tileSampler, 1);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
+
+        this.gl.activeTexture(this.gl.TEXTURE1);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, textureTileNbr);
 
         var vertexCount = 4;
         offset = 0;
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
-
-        /*
-        for (var i = 0; i < tiles.length; i++) {
-            var tile = tiles[i];
-            var dest = tile.getDestinationRect(scale, translate);
-            var cw = this.canvas.width;
-            var ch = this.canvas.height;
-            // dest origo: upper left, 0.0 ... 1.0
-            // data origo: lower left, -1.0 ... 1.0
-            // x, y is upper left corner of tile
-            var x = dest.x / cw * 2 - 1;
-            var y = -(dest.y / ch * 2 - 1);
-            var w = dest.width / cw * 2;
-            var h = dest.height / ch * 2;
-            var data = [
-                x, y - h,      // lower left
-                x + w, y - h,  // lower right
-                x, y,          // upper left
-                x + w, y       // upper right
-            ];
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-            // TODO ES6?
-            // eslint-disable-next-line no-undef
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.DYNAMIC_DRAW);
-
-            var numComponents = 2;
-            var type = this.gl.FLOAT;
-            var normalize = false;
-            var stride = 0;
-            var offset = 0;
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-            this.gl.vertexAttribPointer(
-                this.vertexPos,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset);
-            this.gl.enableVertexAttribArray(this.vertexPos);
-
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureCoordBuffer);
-            this.gl.vertexAttribPointer(
-                this.textureCoord,
-                numComponents,
-                type,
-                normalize,
-                stride,
-                offset);
-            this.gl.enableVertexAttribArray(this.textureCoord);
-
-            this.gl.uniform2i(this.uSize, this.canvas.width, this.canvas.height);
-            this.gl.uniform1i(this.uTile, i);
-            // this.gl.uniform1i(this.textureSampler, 0);
-            this.gl.uniform1i(this.tileSampler, 0);
-
-            var vertexCount = 4;
-            offset = 0;
-            this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
-        }
-        */
 
 
         // Create texture array with all tile textures
@@ -337,38 +278,38 @@ $.WebGlDrawer.prototype = {
         return texture;
     },
 
-    _loadTilePositionTexture: function( tiles ) {
+    _loadTilePositionTexture: function( tiles, scale, translate ) {
         var texture = this.gl.createTexture();
-        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.activeTexture(this.gl.TEXTURE1);
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
         var width = this.canvas.width;
         var height = this.canvas.height;
         // eslint-disable-next-line no-undef
-        var data = new Uint8Array(width * height);
+        var data = new Uint16Array(width * height);
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
-            var context = tile.getContext();
-            var bounds = tile.limitSourceBounds(context.canvas);
-            for (var x = bounds.x; x < bounds.x + bounds.width; x++) {
-                for (var y = bounds.y; y < bounds.y + bounds.height; y++) {
-                    // TODO x and y may be outside bounds
-                    data[x * width + y] = 1;
+            var bounds = tile.getDestinationRect(scale, translate);
+            var limitX = bounds.x + bounds.width;
+            limitX = limitX > width ? width : limitX;
+            var limitY = bounds.y + bounds.height;
+            limitY = limitY > height ? height : limitY;
+            var startX = bounds.x < 0 ? 0 : bounds.x;
+            var startY = bounds.y < 0 ? 0 : bounds.y;
+            for (var x = startX; x < limitX; x++) {
+                for (var y = startY; y < limitY; y++) {
+                    data[x * width + y] = i;
                 }
             }
         }
-        // TODO is not red on screen
-        data.fill(180);
         var level = 0;
         var border = 0;
-        var internalFormat = this.gl.R8UI;
+        var internalFormat = this.gl.R16UI;
         var format =  this.gl.RED_INTEGER;
         var offset = 0;
-        var type = this.gl.UNSIGNED_BYTE;
+        var type = this.gl.UNSIGNED_SHORT;
         this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data, offset);
 
-        // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
         return texture;
