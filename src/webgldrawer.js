@@ -96,8 +96,10 @@ $.WebGlDrawer = function( options ) {
                                                                            \
         void main(void) {                                                  \
             ivec2 coord = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
+            vec2 coordF = vec2(float(coord.x) / float(uSize), float(coord.y) / float(uSize.y));     \
             uint tile =  uvec4(texelFetch(uTileSampler, coord, 0)).x;                 \
-            color = texture(uTextureSampler, vec3(vTextureCoord, 0));                           \
+            vec4 texSamp = texture(uTextureSampler, vec3(coordF.x, coordF.y, tile));           \
+            color = texSamp;                           \
         }                                                                             \
     ";
 
@@ -109,7 +111,6 @@ $.WebGlDrawer = function( options ) {
     this.textureSampler = this.gl.getUniformLocation(this.program, "uTextureSampler");
     this.tileSampler = this.gl.getUniformLocation(this.program, "uTileSampler");
     this.uSize = this.gl.getUniformLocation(this.program, "uSize");
-    this.uTile = this.gl.getUniformLocation(this.program, "uTile");
 
     this.vertexBuffer = this.gl.createBuffer();
 
@@ -264,8 +265,8 @@ $.WebGlDrawer.prototype = {
             var type = this.gl.UNSIGNED_BYTE;
             if (i === 0) {
                 var levels = 1;
-                var format2 = this.gl.RGBA8;
-                this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, format2, width, height, tiles.length);
+                var internalFormat = this.gl.RGBA8;
+                this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
             }
 
             this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
