@@ -331,7 +331,7 @@ $.Drawer.prototype = {
         // TODO asserts
         scale = scale || 1;
         if ( this.useWebGL2) {
-            this.webGlDrawer.draw(tiles, scale, translate);
+            this.webGlDrawer.draw(tiles, tiledImage, scale, translate);
             // TODO fire event
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {
