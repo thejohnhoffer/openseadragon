@@ -82,6 +82,7 @@ $.WebGlDrawer = function( options ) {
         precision highp float;                                              \
         precision highp int;                                                \
         precision highp sampler2DArray;                                    \
+        precision highp isampler2DArray;                                    \
         precision highp usampler2D;                                    \
                                                                     \
         out vec4 color;                                         \
@@ -90,14 +91,23 @@ $.WebGlDrawer = function( options ) {
         uniform ivec2 canvasSize;                                           \
         uniform sampler2DArray textureSampler;                            \
         uniform usampler2D tileNbrSampler;                                  \
-        uniform usampler2D tilePosSampler;                                  \
+        uniform isampler2DArray tilePosSampler;                                  \
                                                                            \
         void main(void) {                                                  \
             ivec2 coord = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
             uint tile =  uvec4(texelFetch(tileNbrSampler, coord, 0)).x;                 \
-            color = vec4(float(tile) / float(4), 0.0, 0.0, 1.0);                           \
+            ivec4 pos = texelFetch(tilePosSampler, ivec3(0, 0, tile), 0);         \
+            int tx = pos.x;    \
+            int ty = pos.y;    \
+            int tw = pos.z;    \
+            int th = pos.w;    \
+            float px = float(coord.x - tx) / float(tw);   \
+            float py = 1.0 - float(coord.y - ty) / float(th);   \
+            vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
+            color = c;                           \
         }                                                                             \
     ";
+    // Note that textures from a HTMLCavnasElement are loaded starting from the top left
 
     // color = vec4( float(coord.x) / float(canvasSize.x), float(coord.y) / float(canvasSize.y), 0.0, 1.0 );   \
     // color = vec4(float(tile) / float(4), 0.0, 0.0, 1.0);                           \
@@ -301,13 +311,8 @@ $.WebGlDrawer.prototype = {
             endY = endY > height ? height : endY;
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
-                    var yFlip = y - (height - 1);
+                    var yFlip = (height - 1) - y;
                     data[(yFlip * width) + x] = i;
-
-                    // TODO this doesn't seem correct
-                    // Expecting tile nr in canvas:
-                    // 0   2
-                    // 1   3
                 }
             }
         }
@@ -331,32 +336,31 @@ $.WebGlDrawer.prototype = {
         var cavnasHeight = this.canvas.height;
         // Origo is top left in tile coord
         // Origo is bottom left in texture
-        // eslint-disable-next-line no-undef
-        var data = new Uint16Array(4);
         for (var i = 0; i < tiles.length; i++) {
+            // eslint-disable-next-line no-undef
+            var data = new Int16Array(4);
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
-            var endX = bounds.x + bounds.width;
-            var endY = bounds.y + bounds.height;
+            var startY = bounds.y + bounds.height - 1;
+            startY = cavnasHeight - 1 - startY;
             var startX = bounds.x;
-            var startY = bounds.y;
-            data[i + 0] = startX;
-            data[i + 1] = cavnasHeight - startY;
-            data[i + 2] = endX;
-            data[i + 3] = cavnasHeight - endY;
+            data[0] = startX;
+            data[1] = startY;
+            data[2] = bounds.width;
+            data[3] = bounds.height;
 
             var level = 0;
-            var width = 4;
+            var width = 1;
             var height = 1;
             var depth = 1;
             var xoffset = 0;
             var yoffset = 0;
             var zoffset = i;
-            var format = this.gl.RED_INTEGER;
-            var type = this.gl.UNSIGNED_SHORT;
+            var format = this.gl.RGBA_INTEGER;
+            var type = this.gl.SHORT;
             if (i === 0) {
                 var levels = 1;
-                var internalFormat = this.gl.R16UI;
+                var internalFormat = this.gl.RGBA16I;
                 this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
             }
 
@@ -364,6 +368,8 @@ $.WebGlDrawer.prototype = {
 
         }
 
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
         return texture;
