@@ -86,9 +86,7 @@ $.WebGlDrawer = function( options ) {
         precision highp usampler2D;                                    \
                                                                     \
         out vec4 color;                                         \
-        uniform vec4 bounds;                                          \
-        uniform ivec2 tileSize;                                           \
-        uniform ivec2 canvasSize;                                           \
+        uniform int tilesLength;   \
         uniform sampler2DArray textureSampler;                            \
         uniform usampler2D tileNbrSampler;                                  \
         uniform isampler2DArray tilePosSampler;                                  \
@@ -96,15 +94,19 @@ $.WebGlDrawer = function( options ) {
         void main(void) {                                                  \
             ivec2 coord = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
             uint tile =  uvec4(texelFetch(tileNbrSampler, coord, 0)).x;                 \
-            ivec4 pos = texelFetch(tilePosSampler, ivec3(0, 0, tile), 0);         \
-            int tx = pos.x;    \
-            int ty = pos.y;    \
-            int tw = pos.z;    \
-            int th = pos.w;    \
-            float px = float(coord.x - tx) / float(tw);   \
-            float py = 1.0 - float(coord.y - ty) / float(th);   \
-            vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
-            color = c;                           \
+            if (tile != uint(tilesLength)) {    \
+                ivec4 pos = texelFetch(tilePosSampler, ivec3(0, 0, tile), 0);         \
+                int tx = pos.x;    \
+                int ty = pos.y;    \
+                int tw = pos.z;    \
+                int th = pos.w;    \
+                float px = float(coord.x - tx) / float(tw);   \
+                float py = 1.0 - float(coord.y - ty) / float(th);   \
+                vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
+                color = c;     \
+            } else {  \
+                color = vec4(0.0, 0.0, 0.0, 0.0);    \
+            }   \
         }                                                                             \
     ";
     // Note that textures from a HTMLCavnasElement are loaded starting from the top left
@@ -117,16 +119,12 @@ $.WebGlDrawer = function( options ) {
     this.vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
     this.textureCoord = this.gl.getAttribLocation(this.program, "aTextureCoord");
 
+    this.tilesLength = this.gl.getUniformLocation(this.program, "tilesLength");
     this.textureSampler = this.gl.getUniformLocation(this.program, "textureSampler");
     this.tileNbrSampler = this.gl.getUniformLocation(this.program, "tileNbrSampler");
     this.tilePosSampler = this.gl.getUniformLocation(this.program, "tilePosSampler");
-    this.imageBounds = this.gl.getUniformLocation(this.program, "bounds");
-    this.tileSize = this.gl.getUniformLocation(this.program, "tileSize");
-    this.canvasSize = this.gl.getUniformLocation(this.program, "canvasSize");
-
 
     this.vertexBuffer = this.gl.createBuffer();
-
 
 };
 
@@ -142,12 +140,13 @@ $.WebGlDrawer.prototype = {
     draw: function( tiles, tiledImage, scale, translate ) {
 
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        console.log('canvas size', this.canvas.width, this.canvas.height);
 
         this.gl.useProgram(this.program);
 
         var texture = this._loadTexture(tiles);
-        var textureTileNbr = this._loadTileNumberTexture(tiles);
-        var textureTilePos = this._loadTilePositionTexture(tiles);
+        var textureTileNbr = this._loadTileNumberTexture(tiles, scale, translate);
+        var textureTilePos = this._loadTilePositionTexture(tiles, scale, translate);
 
         var data = [
             -1, -1,      // lower left
@@ -175,14 +174,10 @@ $.WebGlDrawer.prototype = {
             offset);
         this.gl.enableVertexAttribArray(this.vertexPos);
 
-        var bounds = tiledImage.getBounds(); // Given as upper left as origo
-        // Set lower left as origo
-        this.gl.uniform4f(this.imageBounds, bounds.x, 1 - (bounds.y - bounds.height), bounds.x + bounds.width, 1 - bounds.y);
-        this.gl.uniform2i(this.tileSize, tiledImage.source.getTileWidth(), tiledImage.source.getTileHeight());
+        this.gl.uniform1i(this.tilesLength, tiles.length);
         this.gl.uniform1i(this.textureSampler, 0);
         this.gl.uniform1i(this.tileNbrSampler, 1);
         this.gl.uniform1i(this.tilePosSampler, 2);
-        this.gl.uniform2i(this.canvasSize, this.canvas.width, this.canvas.height);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
@@ -297,6 +292,7 @@ $.WebGlDrawer.prototype = {
         var height = this.canvas.height;
         // eslint-disable-next-line no-undef
         var data = new Uint16Array(width * height);
+        data.fill(tiles.length);
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
@@ -306,13 +302,24 @@ $.WebGlDrawer.prototype = {
             var startX = bounds.x < 0 ? 0 : bounds.x;
             var endX = bounds.x + bounds.width;
             endX = endX > width ? width : endX;
-            var startY = bounds.y < 0 ? 0 : bounds.y;
-            var endY = bounds.y + bounds.height;
+
+            var startY = bounds.y + bounds.height - 1;
+            startY = height - 1 - startY;
+            var endY = startY + bounds.height;
+            startY = startY < 0 ? 0 : startY;
             endY = endY > height ? height : endY;
+
+            console.log('tile', i, 'texture', startX, endX, startY, endY);
+
+            // TODO rounding problems here. Needs fixing.
+            startX = Math.round(startX);
+            startY = Math.round(startY);
+            endX = Math.round(endX);
+            endY = Math.round(endY);
+
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
-                    var yFlip = (height - 1) - y;
-                    data[(yFlip * width) + x] = i;
+                    data[(y * width) + x] = i;
                 }
             }
         }
