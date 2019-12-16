@@ -140,7 +140,6 @@ $.WebGlDrawer.prototype = {
     draw: function( tiles, tiledImage, scale, translate ) {
 
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-        console.log('canvas size', this.canvas.width, this.canvas.height);
 
         this.gl.useProgram(this.program);
 
@@ -296,7 +295,6 @@ $.WebGlDrawer.prototype = {
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
-            console.log('tile', i, 'dest', bounds, 'x', tile.x, 'y', tile.y);
             // Origo is top left in tile coord
             // Origo is bottom left in texture
             var startX = bounds.x < 0 ? 0 : bounds.x;
@@ -308,8 +306,6 @@ $.WebGlDrawer.prototype = {
             var endY = startY + bounds.height;
             startY = startY < 0 ? 0 : startY;
             endY = endY > height ? height : endY;
-
-            console.log('tile', i, 'texture', startX, endX, startY, endY);
 
             // TODO rounding problems here. Needs fixing.
             startX = Math.round(startX);

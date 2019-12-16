@@ -502,7 +502,6 @@ $.Drawer.prototype = {
         if (compositeOperation) {
             this.context.globalCompositeOperation = compositeOperation;
         }
-        console.log('blend', this.context.globalCompositeOperation, 'alpha', this.context.globalAlpha);
         if (bounds) {
             // Internet Explorer, Microsoft Edge, and Safari have problems
             // when you call context.drawImage with negative x or y
