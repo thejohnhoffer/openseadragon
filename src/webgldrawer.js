@@ -82,26 +82,25 @@ $.WebGlDrawer = function( options ) {
         precision highp float;                                              \
         precision highp int;                                                \
         precision highp sampler2DArray;                                    \
-        precision highp isampler2DArray;                                    \
         precision highp usampler2D;                                    \
                                                                     \
         out vec4 color;                                         \
         uniform int tilesLength;   \
         uniform sampler2DArray textureSampler;                            \
         uniform usampler2D tileNbrSampler;                                  \
-        uniform isampler2DArray tilePosSampler;                                  \
+        uniform sampler2DArray tilePosSampler;                                  \
                                                                            \
         void main(void) {                                                  \
             ivec2 coord = ivec2(int(gl_FragCoord.x ), int(gl_FragCoord.y ));            \
             uint tile =  uvec4(texelFetch(tileNbrSampler, coord, 0)).x;                 \
             if (tile != uint(tilesLength)) {    \
-                ivec4 pos = texelFetch(tilePosSampler, ivec3(0, 0, tile), 0);         \
-                int tx = pos.x;    \
-                int ty = pos.y;    \
-                int tw = pos.z;    \
-                int th = pos.w;    \
-                float px = float(coord.x - tx) / float(tw);   \
-                float py = 1.0 - float(coord.y - ty) / float(th);   \
+                vec4 pos = texelFetch(tilePosSampler, ivec3(0, 0, tile), 0);         \
+                float tx = pos.x;    \
+                float ty = pos.y;    \
+                float tw = pos.z;    \
+                float th = pos.w;    \
+                float px = (float(coord.x) - tx) / tw;   \
+                float py = 1.0 - (float(coord.y) - ty) / th;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
                 color = c;     \
             } else {  \
@@ -341,7 +340,7 @@ $.WebGlDrawer.prototype = {
         // Origo is bottom left in texture
         for (var i = 0; i < tiles.length; i++) {
             // eslint-disable-next-line no-undef
-            var data = new Int16Array(4);
+            var data = new Float32Array(4);
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
             var startY = bounds.y + bounds.height - 1;
@@ -359,11 +358,11 @@ $.WebGlDrawer.prototype = {
             var xoffset = 0;
             var yoffset = 0;
             var zoffset = i;
-            var format = this.gl.RGBA_INTEGER;
-            var type = this.gl.SHORT;
+            var format = this.gl.RGBA;
+            var type = this.gl.FLOAT;
             if (i === 0) {
                 var levels = 1;
-                var internalFormat = this.gl.RGBA16I;
+                var internalFormat = this.gl.RGBA32F;
                 this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
             }
 
