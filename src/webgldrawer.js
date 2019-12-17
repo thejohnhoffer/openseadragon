@@ -252,6 +252,15 @@ $.WebGlDrawer.prototype = {
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
 
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LEVEL, 0);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_BASE_LEVEL, 0);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LOD, 0);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_LOD, 0);
+
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
             var context = tile.getContext();
@@ -270,14 +279,16 @@ $.WebGlDrawer.prototype = {
                 var internalFormat = this.gl.RGBA8;
                 this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
             }
+            // if (i === 0) {
+            //     console.log(width, height);
+            //     var levels = 1;
+            //     var internalFormat = this.gl.RGBA8;
+            //     this.gl.texStorage3D(this.gl.TEXTURE_2D, levels, internalFormat, width, height, 1);
+            // }
 
             this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
         }
 
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
         return texture;
     },
 
@@ -285,6 +296,11 @@ $.WebGlDrawer.prototype = {
         var texture = this.gl.createTexture();
         this.gl.activeTexture(this.gl.TEXTURE1);
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAX_LEVEL, 0);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_BASE_LEVEL, 0);
 
         var width = this.canvas.width;
         var height = this.canvas.height;
@@ -306,11 +322,14 @@ $.WebGlDrawer.prototype = {
             startY = startY < 0 ? 0 : startY;
             endY = endY > height ? height : endY;
 
+            // TODO: tile overlap?
             // TODO rounding problems here. Needs fixing.
             startX = Math.round(startX);
             startY = Math.round(startY);
             endX = Math.round(endX);
             endY = Math.round(endY);
+
+            console.log('tile nr', i, 'raw', bounds, 'sx, ex, sy, ey', startX, endX, startY, endY);
 
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
@@ -326,8 +345,6 @@ $.WebGlDrawer.prototype = {
         var type = this.gl.UNSIGNED_SHORT;
         this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data, offset);
 
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
         return texture;
     },
 
@@ -335,6 +352,14 @@ $.WebGlDrawer.prototype = {
         var texture = this.gl.createTexture();
         this.gl.activeTexture(this.gl.TEXTURE2);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
+
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LEVEL, 0);
+        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_BASE_LEVEL, 0);
+
         var cavnasHeight = this.canvas.height;
         // Origo is top left in tile coord
         // Origo is bottom left in texture
@@ -350,6 +375,8 @@ $.WebGlDrawer.prototype = {
             data[1] = startY;
             data[2] = bounds.width;
             data[3] = bounds.height;
+
+            console.log('tile pos, sx, sy, w, h', i, data);
 
             var level = 0;
             var width = 1;
@@ -370,10 +397,6 @@ $.WebGlDrawer.prototype = {
 
         }
 
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
         return texture;
     }
 
