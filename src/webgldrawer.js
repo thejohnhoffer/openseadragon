@@ -99,8 +99,8 @@ $.WebGlDrawer = function( options ) {
                 float ty = pos.y;    \
                 float tw = pos.z;    \
                 float th = pos.w;    \
-                float px = (float(coord.x) - tx) / tw;   \
-                float py = (th - 1.0 - (float(coord.y) - ty)) / th;   \
+                float px = (float(coord.x) + 0.5f - tx) / tw;   \
+                float py = (th - 1.0 - (float(coord.y) + 0.5f - ty)) / th;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
                 color = c;     \
             } else {  \
