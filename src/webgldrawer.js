@@ -307,8 +307,11 @@ $.WebGlDrawer.prototype = {
 
         var width = this.canvas.width;
         var height = this.canvas.height;
+        var alignmentBytes = this.gl.getParameter(this.gl.UNPACK_ALIGNMENT);
+        var alignmentElements = Math.max(alignmentBytes / 2, 1);
+        var dataArrayStride = Math.ceil(width / alignmentElements) * alignmentElements;
         // eslint-disable-next-line no-undef
-        var data = new Uint16Array(width * height);
+        var data = new Uint16Array(dataArrayStride * height);
         data.fill(tiles.length);
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
@@ -336,17 +339,21 @@ $.WebGlDrawer.prototype = {
 
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
-                    data[(y * width) + x] = i;
+                    data[(y * dataArrayStride) + x] = i;
                 }
             }
         }
         var level = 0;
-        var border = 0;
         var internalFormat = this.gl.R16UI;
         var format =  this.gl.RED_INTEGER;
         var offset = 0;
         var type = this.gl.UNSIGNED_SHORT;
-        this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data, offset);
+        var levels = 1;
+        var xoffset = 0;
+        var yoffset = 0;
+
+        this.gl.texStorage2D(this.gl.TEXTURE_2D, levels, internalFormat, width, height);
+        this.gl.texSubImage2D(this.gl.TEXTURE_2D, level, xoffset, yoffset, width, height, format, type, data, offset);
 
         return texture;
     },
