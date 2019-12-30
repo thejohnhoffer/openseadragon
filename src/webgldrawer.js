@@ -100,7 +100,7 @@ $.WebGlDrawer = function( options ) {
                 float tw = pos.z;    \
                 float th = pos.w;    \
                 float px = (gl_FragCoord.x - tx) / tw;   \
-                float py = (th - 1.0 - (gl_FragCoord.y - ty)) / th;   \
+                float py = (th - (gl_FragCoord.y - ty)) / th;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
                 color = c;     \
             } else {  \
@@ -282,12 +282,6 @@ $.WebGlDrawer.prototype = {
                 var internalFormat = this.gl.RGBA8;
                 this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
             }
-            // if (i === 0) {
-            //     console.log(width, height);
-            //     var levels = 1;
-            //     var internalFormat = this.gl.RGBA8;
-            //     this.gl.texStorage3D(this.gl.TEXTURE_2D, levels, internalFormat, width, height, 1);
-            // }
 
             this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
         }
