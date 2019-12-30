@@ -200,6 +200,9 @@ $.WebGlDrawer.prototype = {
         // Create sampler for tile masks
 
 
+        this.gl.deleteTexture(textureTilePos);
+        this.gl.deleteTexture(textureTileNbr);
+        this.gl.deleteTexture(texture);
 
     },
 
