@@ -329,7 +329,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Get this TiledImage's bounds in viewport coordinates.
+     * Get this TiledImage's bounds in viewport coordinates. Correction: world coordsinates?
      * @param {Boolean} [current=false] - Pass true for the current location;
      * false for target location.
      * @returns {OpenSeadragon.Rect} This TiledImage's bounds in viewport coordinates.
@@ -1620,6 +1620,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
         tileCenter = positionT.plus( sizeT.divide( 2 ) ),
         tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
+    // TODO enable?
     // if ( !overlap ) {
     //     sizeC = sizeC.plus( new $.Point( 1, 1 ) );
     // }
