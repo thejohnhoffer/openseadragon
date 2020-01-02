@@ -97,14 +97,21 @@ $.Drawer = function( options ) {
      * @member {Object} context
      * @memberof OpenSeadragon.Drawer#
      */
-    this.context    = this.useCanvas ? this.canvas.getContext( "2d" ) : null;
+    this.context    = this.useWebGL2 ? this.canvas.getContext( "webgl2", {
+        // TODO do by yourself, not working in firefox
+        premultipliedAlpha: false
+    } ) : (this.useCanvas ? this.canvas.getContext( "2d" ) : null);
 
     /**
      * Handler for drawing tiles using WebGL2 if the browser supports it.
      * @member {OpenSeadragon.webGlDrawer}
      * @memberof OpenSeadragon.Drawer#
      */
-    this.webGlDrawer = this.useWebGL2 ? new $.WebGlDrawer() : null;
+    this.webGlDrawer = this.useWebGL2 ? new $.WebGlDrawer( {
+        canvas:  this.canvas,
+        context: this.context
+    } ) : null;
+
     /**
      * Sketch canvas used to temporarily draw tiles which cannot be drawn directly
      * to the main canvas due to opacity. Lazily initialized.
@@ -290,14 +297,6 @@ $.Drawer.prototype = {
             var canvas = context.canvas;
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
-        if (this.useWebGL2 || this.useSketch) {
-            if (bounds) {
-                this.context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
-            } else {
-                var mainCanvas = this.context.canvas;
-                this.context.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-            }
-        }
     },
 
     /**
@@ -331,8 +330,8 @@ $.Drawer.prototype = {
         // TODO asserts
         scale = scale || 1;
         if ( this.useWebGL2) {
-            this.webGlDrawer.draw(tiles, tiledImage, scale, translate);
-            // TODO fire event
+            tiledImage._drawer.webGlDrawer.draw(tiles, tiledImage, scale, translate);
+            // TODO fire tile-drawn event
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {
                 var tile = tiles[ i ];
@@ -386,13 +385,8 @@ $.Drawer.prototype = {
         var context = this.context;
         if ( useSketch ) {
             if (this.sketchCanvas === null) {
-                if (this.useWebGL2) {
-                    this.sketchCanvas = this.webGlDrawer.canvas;
-                    this.sketchContext = this.webGlDrawer.gl;
-                } else {
-                    this.sketchCanvas = document.createElement( "canvas" );
-                    this.sketchContext = this.sketchCanvas.getContext( "2d" );
-                }
+                this.sketchCanvas = document.createElement( "canvas" );
+                this.sketchContext = this.sketchCanvas.getContext( "2d" );
                 var sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
@@ -421,22 +415,18 @@ $.Drawer.prototype = {
 
     // private
     saveContext: function( useSketch ) {
-        if (!this.useCanvas) {
+        if (!this.useCanvas || this.useWebGL2) {
             return;
         }
-        if ( !this.useWebGL) {
-            this._getContext( useSketch ).save();
-        }
+        this._getContext( useSketch ).save();
     },
 
     // private
     restoreContext: function( useSketch ) {
-        if (!this.useCanvas) {
+        if (!this.useCanvas || this.useWebGL2) {
             return;
         }
-        if ( !this.useWebGL) {
-            this._getContext( useSketch ).restore();
-        }
+        this._getContext( useSketch ).restore();
     },
 
     // private
@@ -444,11 +434,14 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        // TODO webgl2
-        var context = this._getContext( useSketch );
-        context.beginPath();
-        context.rect(rect.x, rect.y, rect.width, rect.height);
-        context.clip();
+        if (this.webGlDrawer) {
+            this.webGlDrawer.setClip(rect);
+        } else {
+            var context = this._getContext( useSketch );
+            context.beginPath();
+            context.rect(rect.x, rect.y, rect.width, rect.height);
+            context.clip();
+        }
     },
 
     // private
@@ -456,12 +449,15 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        // TODO webgl2
-        var context = this._getContext( useSketch );
-        context.save();
-        context.fillStyle = fillStyle;
-        context.fillRect(rect.x, rect.y, rect.width, rect.height);
-        context.restore();
+        if (this.webGlDrawer) {
+            this.webGlDrawer.drawRectangle(rect, fillStyle);
+        } else {
+            var context = this._getContext( useSketch );
+            context.save();
+            context.fillStyle = fillStyle;
+            context.fillRect(rect.x, rect.y, rect.width, rect.height);
+            context.restore();
+        }
     },
 
     /**
@@ -563,7 +559,7 @@ $.Drawer.prototype = {
 
     // private
     drawDebugInfo: function(tile, count, i, tiledImage) {
-        if ( !this.useCanvas ) {
+        if ( !this.useCanvas || this.useWebGL2 ) {
             return;
         }
 
@@ -703,8 +699,8 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        if (this.useWebGL) {
-            this.webGlDrawer.imageSmoothingEnabled = this._imageSmoothingEnabled;
+        if (this.webGlDrawer) {
+            this.webGlDrawer.setImageSmoothingEnabled(this._imageSmoothingEnabled);
         } else {
             context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
             context.webkitImageSmoothingEnabled = this._imageSmoothingEnabled;
@@ -729,6 +725,7 @@ $.Drawer.prototype = {
 
     // private
     _offsetForRotation: function(options) {
+        // TODO: webgl
         var point = options.point ?
             options.point.times($.pixelDensityRatio) :
             this.getCanvasCenter();
@@ -748,6 +745,7 @@ $.Drawer.prototype = {
 
     // private
     _flip: function(options) {
+        // TODO: webgl
       options = options || {};
       var point = options.point ?
         options.point.times($.pixelDensityRatio) :
@@ -761,6 +759,7 @@ $.Drawer.prototype = {
 
     // private
     _restoreRotationChanges: function(useSketch) {
+        // TODO: webgl
         var context = this._getContext(useSketch);
         context.restore();
     },

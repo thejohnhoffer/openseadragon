@@ -45,14 +45,14 @@ $.WebGlDrawer = function( options ) {
     // TODO global alpha
     // TODO image smooting
     this.imageSmoothing = true;
+    this.clip = null;
+    this.fillRect = {};
 
-    this.canvas = document.createElement( "canvas" );
+    $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
+    $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
 
-    this.gl = this.canvas.getContext( "webgl2", {
-        // TODO do by yourself, not working in firefox
-        premultipliedAlpha: false
-    } );
-    $.console.assert( "[WebGlDrawer] webgl2 is not suported." );
+    this.canvas = options.canvas;
+    this.gl = options.context;
 
     // return vertex position only
     this.vertexShaderSource = "              \
@@ -134,10 +134,30 @@ $.WebGlDrawer.prototype = {
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.clip = null;
+        this.fillRect = {};
+    },
+
+    setClip: function( rect ) {
+        // Clip Rectangle to use at next draw.
+        this.clip = rect;
+    },
+
+    drawRectangle: function( rect, fillStyle) {
+        this.fillRect = {
+            rect: rect,
+            fillStyle: fillStyle
+        };
+    },
+
+    setImageSmoothingEnabled: function( enabled ) {
+        this.imageSmoothing = enabled;
     },
 
     draw: function( tiles, tiledImage, scale, translate ) {
 
+        // TODO, use clip and fill rect
+        // console.log('canvas size', this.canvas.width, this.canvas.height);
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
         this.gl.useProgram(this.program);
@@ -199,7 +219,6 @@ $.WebGlDrawer.prototype = {
         // Create sampler for tile textures
         // Create sampler for tile masks
 
-
         // TODO clean up: delete arrays/textures/program etc
         this.gl.deleteTexture(textureTilePos);
         this.gl.deleteTexture(textureTileNbr);
@@ -258,8 +277,13 @@ $.WebGlDrawer.prototype = {
 
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR); // TODO dependant on image smoothing parameter?
-        this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        if (this.imageSmoothing) {
+            this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        } else {
+            this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        }
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LEVEL, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_BASE_LEVEL, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LOD, 0);
@@ -302,6 +326,7 @@ $.WebGlDrawer.prototype = {
 
         var width = this.canvas.width;
         var height = this.canvas.height;
+
         var alignmentBytes = this.gl.getParameter(this.gl.UNPACK_ALIGNMENT);
         var alignmentElements = Math.max(alignmentBytes / 2, 1);
         var dataArrayStride = Math.ceil(width / alignmentElements) * alignmentElements;
@@ -330,7 +355,7 @@ $.WebGlDrawer.prototype = {
             endX = Math.round(endX);
             endY = Math.round(endY);
 
-            console.log('tile nr', i, 'raw', bounds, 'sx, ex, sy, ey', startX, endX, startY, endY);
+            // console.log('tile nr', i, 'raw', bounds, 'sx, ex, sy, ey', startX, endX, startY, endY);
 
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
@@ -381,7 +406,7 @@ $.WebGlDrawer.prototype = {
             data[2] = bounds.width;
             data[3] = bounds.height;
 
-            console.log('tile pos, sx, sy, w, h', i, data);
+            // console.log('tile pos, sx, sy, w, h', i, data);
 
             var level = 0;
             var width = 1;
