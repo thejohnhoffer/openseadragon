@@ -129,10 +129,24 @@ $.WebGlDrawer = function( options ) {
 /** @lends OpenSeadragon.WebGlDrawer.prototype */
 $.WebGlDrawer.prototype = {
 
-    clear: function() {
+    clear: function( bounds ) {
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-        this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        if (bounds) {
+            this.gl.enable(this.gl.SCISSOR_TEST);
+
+            bounds = this._viewerElementToWebGlCoordinates(bounds);
+            this._limitBounds(bounds);
+            this.gl.scissor(bounds.x, bounds.y, bounds.width, bounds.height);
+
+            this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+            this.gl.disable(this.gl.SCISSOR_TEST);
+        } else {
+            this.gl.clearColor(1.0, 0.0, 0.0, 0.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        }
+
         this.clip = null;
         this.fillRect = {};
     },
@@ -317,6 +331,48 @@ $.WebGlDrawer.prototype = {
         return texture;
     },
 
+    /**
+     * Creates a new rectangle.
+     *
+     * @param {Rectangle} rectangle
+     * @returns a new rectangle
+     */
+    _viewerElementToWebGlCoordinates: function( rectangle ) {
+        // Origo is top left in tile coord
+        // Origo is bottom left in WebGL
+        var y = rectangle.y + rectangle.height - 1;
+        y = this.canvas.height - 1 - y;
+
+        var rectWebGl = rectangle.clone();
+        rectWebGl.y = y;
+        return rectWebGl;
+    },
+
+    /**
+     * Modifies the input rectangle.
+     *
+     * @param {Rectangle} bounds
+     * @returns the same rectangle
+     */
+    _limitBounds: function( bounds ) {
+        var width = this.canvas.width;
+        var height = this.canvas.height;
+
+        bounds.x = bounds.x < 0 ? 0 : bounds.x;
+        if (bounds.x + bounds.width > width) {
+            var endX = bounds.x + bounds.width;
+            endX = endX > width ? width : endX;
+            bounds.width = endX - bounds.x;
+        }
+        bounds.y = bounds.y < 0 ? 0 : bounds.y;
+        if (bounds.y + bounds.height > height) {
+            var endY = bounds.y + bounds.height;
+            endY = endY > height ? height : endY;
+            bounds.height = endY - bounds.y;
+        }
+        return bounds;
+    },
+
     _loadTileNumberTexture: function( tiles, scale, translate ) {
         var texture = this.gl.createTexture();
         this.gl.activeTexture(this.gl.TEXTURE1);
@@ -339,17 +395,12 @@ $.WebGlDrawer.prototype = {
         for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
-            // Origo is top left in tile coord
-            // Origo is bottom left in texture
-            var startX = bounds.x < 0 ? 0 : bounds.x;
+            bounds = this._viewerElementToWebGlCoordinates(bounds);
+            this._limitBounds(bounds);
+            var startX = bounds.x;
             var endX = bounds.x + bounds.width;
-            endX = endX > width ? width : endX;
-
-            var startY = bounds.y + bounds.height - 1;
-            startY = height - 1 - startY;
-            var endY = startY + bounds.height;
-            startY = startY < 0 ? 0 : startY;
-            endY = endY > height ? height : endY;
+            var startY = bounds.y;
+            var endY = bounds.y + bounds.height;
 
             // TODO: tile overlap?
             // TODO rounding problems here. Needs fixing.

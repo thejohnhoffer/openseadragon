@@ -290,7 +290,7 @@ $.Drawer.prototype = {
         }
         var context = this._getContext(useSketch);
         if (this.useWebGL2) {
-            this.webGlDrawer.clear(); // TODO bounds?
+            this.webGlDrawer.clear(bounds);
         } else if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
