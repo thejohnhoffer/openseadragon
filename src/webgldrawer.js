@@ -5,7 +5,7 @@
  * Copyright (C) 2010-2013 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
+ * modification, are prmitted provided that the following conditions are
  * met:
  *
  * - Redistributions of source code must retain the above copyright notice,
@@ -44,8 +44,8 @@ $.WebGlDrawer = function( options ) {
     // TODO tile.drawingHandler?
     // TODO global alpha
     this.imageSmoothing = true;
-    this.clip = null;
-    this.fillRect = {};
+    this.clip = undefined;
+    this.fillRect = undefined;
 
     $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
     $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
@@ -132,35 +132,55 @@ $.WebGlDrawer.prototype = {
     clear: function( bounds ) {
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         if (bounds) {
-            this.gl.enable(this.gl.SCISSOR_TEST);
-
-            bounds = this._viewerElementToWebGlCoordinates(bounds);
-            this._limitBounds(bounds);
-            this.gl.scissor(bounds.x, bounds.y, bounds.width, bounds.height);
-
-            this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-            this.gl.disable(this.gl.SCISSOR_TEST);
+            this._fillRect(bounds);
         } else {
-            this.gl.clearColor(1.0, 0.0, 0.0, 0.0);
+            this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         }
 
-        this.clip = null;
-        this.fillRect = {};
+        this.clip = undefined;
+        this.fillRect = undefined;
+    },
+
+    _fillRect: function( rect, color ) {
+        this.gl.enable(this.gl.SCISSOR_TEST);
+
+        rect = this._viewerElementToWebGlCoordinates(rect);
+        this._limitBounds(rect);
+        this.gl.scissor(rect.x, rect.y, rect.width, rect.height);
+
+        if (color && color.length >= 3) {
+            this.gl.clearColor(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, color.length > 3 ? color[3] / 255.0 : 1.0);
+        } else {
+            this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        }
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+        this.gl.disable(this.gl.SCISSOR_TEST);
     },
 
     setClip: function( rect ) {
-        // Clip Rectangle to use at next draw.
-        this.clip = rect;
+        this.clip = this._viewerElementToWebGlCoordinates(rect);
     },
 
     drawRectangle: function( rect, fillStyle) {
+        //TODO
         this.fillRect = {
-            rect: rect,
-            fillStyle: fillStyle
+            rect: this._viewerElementToWebGlCoordinates(rect),
+            color: this._parseColor(fillStyle)
         };
+    },
+
+    _parseColor: function( input ) {
+        // TODO: not working
+        var div = document.createElement('div');
+        div.style.color = input;
+        var m = getComputedStyle(div).color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+        if (m) {
+            return [m[1], m[2], m[3]];
+        } else {
+            throw new Error("Colour " + input + " could not be parsed.");
+        }
     },
 
     setImageSmoothingEnabled: function( enabled ) {
@@ -223,6 +243,9 @@ $.WebGlDrawer.prototype = {
         offset = 0;
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
 
+        if (this.fillRect) {
+            this._fillRect(this.fillRect.rect, this.fillRect.color);
+        }
 
         // Create texture array with all tile textures
         // Create texture array with tile masks
@@ -240,7 +263,7 @@ $.WebGlDrawer.prototype = {
     },
 
     destroy: function() {
-
+        // TODO. Fill in. Is this called?
     },
 
     _loadShader: function(source, type) {
@@ -332,9 +355,11 @@ $.WebGlDrawer.prototype = {
     },
 
     /**
+     * Input coordnates use top left as origo, output uses bottom left.
+     * Canvas width and height are used for transform.
      * Creates a new rectangle.
      *
-     * @param {Rectangle} rectangle
+     * @param {Openseadragon.REct} rectangle
      * @returns a new rectangle
      */
     _viewerElementToWebGlCoordinates: function( rectangle ) {
@@ -349,28 +374,34 @@ $.WebGlDrawer.prototype = {
     },
 
     /**
+     * Limits rect to canvas size.
      * Modifies the input rectangle.
      *
-     * @param {Rectangle} bounds
+     * @param {Openseadragon.Rect} rect
+     * @param {Openseadragon.Rect} limit Bounds to limit rect to. If omitted, canvas limits will be used.
      * @returns the same rectangle
      */
-    _limitBounds: function( bounds ) {
-        var width = this.canvas.width;
-        var height = this.canvas.height;
+    _limitToBounds: function( rect, limit ) {
+        var minX = limit ? limit.x : 0;
+        var minY = limit ? limit.y : 0;
+        var width = limit ? limit.width : this.canvas.width;
+        var height = limit ? limit.height : this.canvas.height;
+        var maxX = minX + width;
+        var maxY = minY + height;
 
-        bounds.x = bounds.x < 0 ? 0 : bounds.x;
-        if (bounds.x + bounds.width > width) {
-            var endX = bounds.x + bounds.width;
-            endX = endX > width ? width : endX;
-            bounds.width = endX - bounds.x;
+        rect.x = rect.x < minX ? minX : rect.x;
+        if (rect.x + rect.width > maxX) {
+            var endX = rect.x + rect.width;
+            endX = endX > maxX ? maxX : endX;
+            rect.width = endX - rect.x;
         }
-        bounds.y = bounds.y < 0 ? 0 : bounds.y;
-        if (bounds.y + bounds.height > height) {
-            var endY = bounds.y + bounds.height;
-            endY = endY > height ? height : endY;
-            bounds.height = endY - bounds.y;
+        rect.y = rect.y < minY ? minY : rect.y;
+        if (rect.y + rect.height > maxY) {
+            var endY = rect.y + rect.height;
+            endY = endY > maxY ? maxY : endY;
+            rect.height = endY - rect.y;
         }
-        return bounds;
+        return rect;
     },
 
     _loadTileNumberTexture: function( tiles, scale, translate ) {
@@ -396,7 +427,7 @@ $.WebGlDrawer.prototype = {
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
             bounds = this._viewerElementToWebGlCoordinates(bounds);
-            this._limitBounds(bounds);
+            bounds = this._limitToBounds(bounds, this.clip);
             var startX = bounds.x;
             var endX = bounds.x + bounds.width;
             var startY = bounds.y;
