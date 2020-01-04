@@ -43,7 +43,6 @@
 $.WebGlDrawer = function( options ) {
     // TODO tile.drawingHandler?
     // TODO global alpha
-    // TODO image smooting
     this.imageSmoothing = true;
     this.clip = null;
     this.fillRect = {};
@@ -270,7 +269,6 @@ $.WebGlDrawer.prototype = {
     },
 
     _loadTexture: function( tiles ) {
-
         var texture = this.gl.createTexture();
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
@@ -289,28 +287,33 @@ $.WebGlDrawer.prototype = {
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LOD, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_LOD, 0);
 
+        var size = [];
+        var maxWidth = 0;
+        var maxHeight = 0;
         for (var i = 0; i < tiles.length; i++) {
-            var tile = tiles[i];
-            var context = tile.getContext();
-            var bounds = tile.limitSourceBounds(context.canvas);
-            var level = 0;
-            var width = bounds.width;
-            var height = bounds.height;
-            var depth = 1;
-            var xoffset = 0;
-            var yoffset = 0;
-            var zoffset = i;
-            var format = this.gl.RGBA;
-            var type = this.gl.UNSIGNED_BYTE;
-            if (i === 0) {
-                var levels = 1;
-                var internalFormat = this.gl.RGBA8;
-                this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, width, height, tiles.length);
-            }
-
-            this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
+            var bounds = tiles[i].limitSourceBounds(tiles[i].getContext().canvas);
+            size.push(bounds);
+            maxWidth = bounds.width > maxWidth ? bounds.width : maxWidth;
+            maxHeight = bounds.height > maxHeight ? bounds.height : maxHeight;
         }
 
+        var level = 0;
+        var depth = 1;
+        var xoffset = 0;
+        var yoffset = 0;
+        var format = this.gl.RGBA;
+        var type = this.gl.UNSIGNED_BYTE;
+        var levels = 1;
+        var internalFormat = this.gl.RGBA8;
+        this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, maxWidth, maxHeight, tiles.length);
+
+        for (var j = 0; j < tiles.length; j++) {
+            var zoffset = j;
+            var context = tiles[j].getContext();
+            var width = size[j].width;
+            var height = size[j].height;
+            this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
+        }
         return texture;
     },
 
