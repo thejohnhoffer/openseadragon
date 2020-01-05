@@ -150,7 +150,7 @@ $.WebGlDrawer.prototype = {
         this.gl.scissor(rect.x, rect.y, rect.width, rect.height);
 
         if (color && color.length >= 3) {
-            this.gl.clearColor(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, color.length > 3 ? color[3] / 255.0 : 1.0);
+            this.gl.clearColor(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, 1.0);
         } else {
             this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
         }
@@ -173,9 +173,7 @@ $.WebGlDrawer.prototype = {
 
     _parseColor: function( input ) {
         // TODO: not working
-        var div = document.createElement('div');
-        div.style.color = input;
-        var m = getComputedStyle(div).color.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+        var m = input.match(/^rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
         if (m) {
             return [m[1], m[2], m[3]];
         } else {
