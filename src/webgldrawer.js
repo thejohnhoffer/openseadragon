@@ -211,7 +211,7 @@ $.WebGlDrawer.prototype = {
         return rectWebGl;
     },
 
-    draw: function( tiles, tiledImage, scale, translate ) {
+    draw: function( tiles, scale, translate ) {
 
         // TODO, use clip and fill rect
         // console.log('canvas size', this.canvas.width, this.canvas.height);
