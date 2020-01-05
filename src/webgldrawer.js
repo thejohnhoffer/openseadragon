@@ -146,7 +146,7 @@ $.WebGlDrawer.prototype = {
         this.gl.enable(this.gl.SCISSOR_TEST);
 
         rect = this._viewerElementToWebGlCoordinates(rect);
-        this._limitBounds(rect);
+        this._limitToBounds(rect);
         this.gl.scissor(rect.x, rect.y, rect.width, rect.height);
 
         if (color && color.length >= 3) {
