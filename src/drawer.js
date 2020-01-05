@@ -329,15 +329,15 @@ $.Drawer.prototype = {
             tiledImage._drawer.webGlDrawer.draw( tiles, scale, translate );
             // in webGL all tiles are draw at once, can't hook in to drawing of each tile
             // Instead, fire all events at once.
-            for (var i = tiles.length - 1; i >= 0; i--) {
-                this._fireTileDrawnEvent( tiledImage.viewer, tiles[i] );
+            for (var j = tiles.length - 1; j >= 0; j--) {
+                this._fireTileDrawnEvent( tiledImage, tiles[j] );
             }
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {
                 var tile = tiles[ i ];
                 tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
                 tile.beingDrawn = true;
-                this._fireTileDrawnEvent( tiledImage.viewer, tile );
+                this._fireTileDrawnEvent( tiledImage, tile );
             }
         }
     },
@@ -345,11 +345,11 @@ $.Drawer.prototype = {
     /**
      * Fire tile-drawn event.
      *
-     * @param {OpenSeadragon.Viewer} viewer
+     * @param {OpenSeadragon.TiledImage} tiledImage
      * @param {OpenSeadragon.Tile} tile
      */
-    _fireTileDrawnEvent: function( viewer, tile ) {
-        if(viewer ){
+    _fireTileDrawnEvent: function( tiledImage, tile ) {
+        if( tiledImage.viewer ){
             /**
              * <em>- Needs documentation -</em>
              *
@@ -361,7 +361,7 @@ $.Drawer.prototype = {
              * @property {OpenSeadragon.Tile} tile
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
-            viewer.raiseEvent( 'tile-drawn', {
+            tiledImage.viewer.raiseEvent( 'tile-drawn', {
                 tiledImage: tiledImage,
                 tile: tile
             });
