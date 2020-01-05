@@ -1799,7 +1799,9 @@ function OpenSeadragon( options ){
          * @function
          */
         now: function( ) {
-            if (Date.now) {
+            if (window.performance) {
+                $.now = window.performance.now.bind(window.performance);
+            } else if (Date.now) {
                 $.now = Date.now;
             } else {
                 $.now = function() {
