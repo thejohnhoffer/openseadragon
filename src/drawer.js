@@ -324,7 +324,6 @@ $.Drawer.prototype = {
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
      */
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
-        // TODO asserts
         scale = scale || 1;
         if ( this.useWebGL2) {
             tiledImage._drawer.webGlDrawer.draw(tiles, scale, translate, );
