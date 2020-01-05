@@ -327,32 +327,45 @@ $.Drawer.prototype = {
         // TODO asserts
         scale = scale || 1;
         if ( this.useWebGL2) {
-            tiledImage._drawer.webGlDrawer.draw(tiles, tiledImage, scale, translate);
-            // TODO fire tile-drawn event
+            tiledImage._drawer.webGlDrawer.draw(tiles, scale, translate, );
+            // in webGL all tiles are draw at once, can't hook in to drawing of each tile
+            // Instead, fire all events at once.
+            for (var i = tiles.length - 1; i >= 0; i--) {
+                this._fireTileDrawnEvent( tiledImage.viewer, tiles[i] );
+            }
         } else {
             for (var i = tiles.length - 1; i >= 0; i--) {
                 var tile = tiles[ i ];
                 tiledImage._drawer.drawTile( tile, tiledImage._drawingHandler, useSketch, scale, translate );
                 tile.beingDrawn = true;
-
-                if( tiledImage.viewer ){
-                    /**
-                     * <em>- Needs documentation -</em>
-                     *
-                     * @event tile-drawn
-                     * @memberof OpenSeadragon.Viewer
-                     * @type {object}
-                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                     * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                     * @property {OpenSeadragon.Tile} tile
-                     * @property {?Object} userData - Arbitrary subscriber-defined object.
-                     */
-                    tiledImage.viewer.raiseEvent( 'tile-drawn', {
-                        tiledImage: tiledImage,
-                        tile: tile
-                    });
-                }
+                this._fireTileDrawnEvent( tiledImage.viewer, tile );
             }
+        }
+    },
+
+    /**
+     * Fire tile-drawn event.
+     *
+     * @param {OpenSeadragon.Viewer} viewer
+     * @param {OpenSeadragon.Tile} tile
+     */
+    _fireTileDrawnEvent: function( viewer, tile ) {
+        if(viewer ){
+            /**
+             * <em>- Needs documentation -</em>
+             *
+             * @event tile-drawn
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+             * @property {OpenSeadragon.Tile} tile
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            viewer.raiseEvent( 'tile-drawn', {
+                tiledImage: tiledImage,
+                tile: tile
+            });
         }
     },
 
