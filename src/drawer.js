@@ -97,10 +97,7 @@ $.Drawer = function( options ) {
      * @member {Object} context
      * @memberof OpenSeadragon.Drawer#
      */
-    this.context    = this.useWebGL2 ? this.canvas.getContext( "webgl2", {
-        // TODO do by yourself, not working in firefox
-        premultipliedAlpha: false
-    } ) : (this.useCanvas ? this.canvas.getContext( "2d" ) : null);
+    this.context    = this.useWebGL2 ? this.canvas.getContext( "webgl2" ) : (this.useCanvas ? this.canvas.getContext( "2d" ) : null);
 
     /**
      * Handler for drawing tiles using WebGL2 if the browser supports it.

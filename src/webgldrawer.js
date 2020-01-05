@@ -101,6 +101,9 @@ $.WebGlDrawer = function( options ) {
                 float px = (gl_FragCoord.x - tx) / tw;   \
                 float py = (th - (gl_FragCoord.y - ty)) / th;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
+                c.x = c.x * c.w;             \
+                c.y = c.y * c.w;             \
+                c.z = c.z * c.w;             \
                 color = c;     \
             } else {  \
                 color = vec4(0.0, 0.0, 0.0, 0.0);    \
