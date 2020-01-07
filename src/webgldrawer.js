@@ -37,22 +37,18 @@
 /**
  * @class WebGlDrawer
  * @memberof OpenSeadragon
- * @classdesc Handles WebGL rendering of tiles for an {@link OpenSeadragon.Viewer}.
+ * @classdesc Handles WebGL2 rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this WebGlDrawer.
  */
 $.WebGlDrawer = function( options ) {
-    // TODO tile.drawingHandler?
-    this.imageSmoothing = true;
-    this.clip = undefined;
-    this.fillRect = undefined;
-    this.transformMatrix = undefined;
-    this.opacity = 1.0;
 
     $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
     $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
 
     this.canvas = options.canvas;
     this.gl = options.context;
+
+    this.clear();
 
     // return vertex position only
     this.vertexShaderSource = "              \
