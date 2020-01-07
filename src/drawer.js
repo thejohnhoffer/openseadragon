@@ -253,7 +253,7 @@ $.Drawer.prototype = {
         this.canvas.height = 1;
         this.sketchCanvas = null;
         this.sketchContext = null;
-        if (this.webGlDrawer) {
+        if (this.useWebGL2) {
             this.webGlDrawer.destroy();
         }
     },
@@ -443,7 +443,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if (this.webGlDrawer) {
+        if (this.useWebGL2) {
             this.webGlDrawer.setClip(rect);
         } else {
             var context = this._getContext( useSketch );
@@ -458,7 +458,7 @@ $.Drawer.prototype = {
         if (!this.useCanvas) {
             return;
         }
-        if (this.webGlDrawer) {
+        if (this.useWebGL2) {
             this.webGlDrawer.drawRectangle(rect, fillStyle);
         } else {
             var context = this._getContext( useSketch );
@@ -708,7 +708,7 @@ $.Drawer.prototype = {
 
     // private
     _updateImageSmoothingEnabled: function(context){
-        if (this.webGlDrawer) {
+        if (this.useWebGL2) {
             this.webGlDrawer.setImageSmoothingEnabled(this._imageSmoothingEnabled);
         } else {
             context.mozImageSmoothingEnabled = this._imageSmoothingEnabled;
