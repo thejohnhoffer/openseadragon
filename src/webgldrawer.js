@@ -312,7 +312,10 @@ $.WebGlDrawer.prototype = {
     },
 
     destroy: function() {
-        // TODO. Fill in. Is this called?
+        this.gl.deleteBuffer(this.shader.vertexBuffer);
+        this.gl.deleteShader(this.vertexShader);
+        this.gl.deleteShader(this.fragmentShader);
+        this.gl.deleteProgram(this.program);
     },
 
     _loadShader: function(source, type) {
@@ -331,11 +334,11 @@ $.WebGlDrawer.prototype = {
     _loadProgram: function() {
         var program = this.gl.createProgram();
 
-        var vertexShader = this._loadShader(this.vertexShaderSource, this.gl.VERTEX_SHADER);
-        var fragmentShader = this._loadShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
+        this.vertexShader = this._loadShader(this.vertexShaderSource, this.gl.VERTEX_SHADER);
+        this.fragmentShader = this._loadShader(this.fragmentShaderSource, this.gl.FRAGMENT_SHADER);
 
-        this.gl.attachShader(program, vertexShader);
-        this.gl.attachShader(program, fragmentShader);
+        this.gl.attachShader(program, this.vertexShader);
+        this.gl.attachShader(program, this.fragmentShader);
         this.gl.linkProgram(program);
 
         if ( !this.gl.getProgramParameter(program, this.gl.LINK_STATUS) ) {
@@ -343,15 +346,6 @@ $.WebGlDrawer.prototype = {
             return null;
         }
         return program;
-    },
-
-    _createBuffer: function(data) {
-        var buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-        // TODO ES6?
-        // eslint-disable-next-line no-undef
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
-        return buffer;
     },
 
     _loadTexture: function( tiles ) {
