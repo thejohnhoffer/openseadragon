@@ -1620,18 +1620,20 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
         tileCenter = positionT.plus( sizeT.divide( 2 ) ),
         tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-    // TODO enable?
-    // if ( !overlap ) {
-    //     sizeC = sizeC.plus( new $.Point( 1, 1 ) );
-    // }
+    if ( !this._drawer.useWebGL2 ) {
+        // Needed to avoid visible seams in canvas 2d context.
+        if ( !overlap ) {
+            sizeC = sizeC.plus( new $.Point( 1, 1 ) );
+        }
 
-    // if (tile.isRightMost && tiledImage.wrapHorizontal) {
-    //     sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
-    // }
+        if (tile.isRightMost && tiledImage.wrapHorizontal) {
+            sizeC.x += 0.75; // Otherwise Firefox and Safari show seams
+        }
 
-    // if (tile.isBottomMost && tiledImage.wrapVertical) {
-    //     sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
-    // }
+        if (tile.isBottomMost && tiledImage.wrapVertical) {
+            sizeC.y += 0.75; // Otherwise Firefox and Safari show seams
+        }
+    }
 
     tile.position   = positionC;
     tile.size       = sizeC;
