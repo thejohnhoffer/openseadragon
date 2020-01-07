@@ -283,6 +283,11 @@ $.WebGlDrawer.prototype = {
         this.gl.activeTexture(this.gl.TEXTURE2);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, textureTilePos);
 
+        for (var i = tiles.length - 1; i >= 0; i--) {
+            // 'tile-drawing' event
+            tiledImage._drawingHandler({tile: tiles[i], context: this.context, rendered: tiles[i].getContext()});
+        }
+
         var vertexCount = 4;
         offset = 0;
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, offset, vertexCount);
