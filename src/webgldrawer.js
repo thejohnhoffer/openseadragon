@@ -42,10 +42,11 @@
  */
 $.WebGlDrawer = function( options ) {
     // TODO tile.drawingHandler?
-    // TODO global alpha
     this.imageSmoothing = true;
     this.clip = undefined;
     this.fillRect = undefined;
+    this.transformMatrix = undefined;
+    this.opacity = 1.0;
 
     $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
     $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
@@ -85,6 +86,7 @@ $.WebGlDrawer = function( options ) {
                                                                     \
         out vec4 color;                                         \
         uniform int tilesLength;   \
+        uniform float globalAlpha;          \
         uniform sampler2DArray textureSampler;                            \
         uniform usampler2D tileNbrSampler;                                  \
         uniform sampler2DArray tilePosSampler;                                  \
@@ -101,6 +103,7 @@ $.WebGlDrawer = function( options ) {
                 float px = (gl_FragCoord.x - tx) / tw;   \
                 float py = (th - (gl_FragCoord.y - ty)) / th;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
+                c.w = c.w * globalAlpha;      \
                 c.x = c.x * c.w;             \
                 c.y = c.y * c.w;             \
                 c.z = c.z * c.w;             \
@@ -110,6 +113,7 @@ $.WebGlDrawer = function( options ) {
             }   \
         }                                                                             \
     ";
+    // FragCoord: lower left origo, pixel centers are at half a pixel. Window coordinates.
     // Note that textures from a HTMLCavnasElement are loaded starting from the top left
 
     // color = vec4( float(coord.x) / float(canvasSize.x), float(coord.y) / float(canvasSize.y), 0.0, 1.0 );   \
@@ -117,15 +121,25 @@ $.WebGlDrawer = function( options ) {
 
     this.program = this._loadProgram();
 
-    this.vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
-    this.textureCoord = this.gl.getAttribLocation(this.program, "aTextureCoord");
+    var vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
 
-    this.tilesLength = this.gl.getUniformLocation(this.program, "tilesLength");
-    this.textureSampler = this.gl.getUniformLocation(this.program, "textureSampler");
-    this.tileNbrSampler = this.gl.getUniformLocation(this.program, "tileNbrSampler");
-    this.tilePosSampler = this.gl.getUniformLocation(this.program, "tilePosSampler");
+    var globalAlpha = this.gl.getUniformLocation(this.program, "globalAlpha");
+    var tilesLength = this.gl.getUniformLocation(this.program, "tilesLength");
+    var textureSampler = this.gl.getUniformLocation(this.program, "textureSampler");
+    var tileNbrSampler = this.gl.getUniformLocation(this.program, "tileNbrSampler");
+    var tilePosSampler = this.gl.getUniformLocation(this.program, "tilePosSampler");
 
-    this.vertexBuffer = this.gl.createBuffer();
+    var vertexBuffer = this.gl.createBuffer();
+
+    this.shader = {
+        vertexPos: vertexPos,
+        globalAlpha: globalAlpha,
+        tilesLength: tilesLength,
+        textureSampler: textureSampler,
+        tileNbrSampler: tileNbrSampler,
+        tilePosSampler: tilePosSampler,
+        vertexBuffer: vertexBuffer
+    };
 
 };
 
@@ -143,6 +157,8 @@ $.WebGlDrawer.prototype = {
 
         this.clip = undefined;
         this.fillRect = undefined;
+        this.transformMatrix = undefined;
+        this.opacity = 1.0;
     },
 
     _fillRect: function( rect, color ) {
@@ -197,7 +213,7 @@ $.WebGlDrawer.prototype = {
      * Canvas width and height are used for transform.
      * Creates a new rectangle.
      *
-     * @param {Openseadragon.REct} rectangle
+     * @param {Openseadragon.Rect} rectangle
      * @returns a new rectangle
      */
     _viewerElementToWebGlCoordinates: function( rectangle ) {
@@ -211,8 +227,15 @@ $.WebGlDrawer.prototype = {
         return rectWebGl;
     },
 
-    draw: function( tiles, scale, translate ) {
-
+    /**
+     * Draws the given tiles.
+     * @param {OpenSeadragon.Tile[]} tiles - The tiles to draw.
+     * @param {OpenSeadragon.tiledImage} tiledImage - The image that holds the tiles
+     * @param {Float} [scale=1] - Apply a scale to tile position and size. Defaults to 1.
+     * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
+     */
+    draw: function( tiles, tiledImage, scale, translate ) {
+        // TODO drawing-handler?
         // TODO, use clip and fill rect
         // console.log('canvas size', this.canvas.width, this.canvas.height);
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -229,7 +252,7 @@ $.WebGlDrawer.prototype = {
             -1, 1,          // upper left
             1, 1       // upper right
         ];
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shader.vertexBuffer);
         // TODO ES6?
         // eslint-disable-next-line no-undef
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.DYNAMIC_DRAW);
@@ -239,20 +262,21 @@ $.WebGlDrawer.prototype = {
         var normalize = false;
         var stride = 0;
         var offset = 0;
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shader.vertexBuffer);
         this.gl.vertexAttribPointer(
-            this.vertexPos,
+            this.shader.vertexPos,
             numComponents,
             type,
             normalize,
             stride,
             offset);
-        this.gl.enableVertexAttribArray(this.vertexPos);
+        this.gl.enableVertexAttribArray(this.shader.vertexPos);
 
-        this.gl.uniform1i(this.tilesLength, tiles.length);
-        this.gl.uniform1i(this.textureSampler, 0);
-        this.gl.uniform1i(this.tileNbrSampler, 1);
-        this.gl.uniform1i(this.tilePosSampler, 2);
+        this.gl.uniform1f(this.shader.globalAlpha, tiledImage.getOpacity());
+        this.gl.uniform1i(this.shader.tilesLength, tiles.length);
+        this.gl.uniform1i(this.shader.textureSampler, 0);
+        this.gl.uniform1i(this.shader.tileNbrSampler, 1);
+        this.gl.uniform1i(this.shader.tilePosSampler, 2);
 
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
