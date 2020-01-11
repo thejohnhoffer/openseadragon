@@ -233,14 +233,12 @@ $.WebGlDrawer.prototype = {
             this.transformMatrix = matrix;
         } else {
             // Prepend
-            const m1 = matrix;
-            const m2 = this.transformMatrix;
 
         }
 
     },
 
-    clearTransform() {
+    clearTransform: function() {
         this.transformMatrix = undefined;
     },
 
