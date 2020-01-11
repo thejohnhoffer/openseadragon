@@ -569,6 +569,7 @@ $.Drawer.prototype = {
     // private
     drawDebugInfo: function(tile, count, i, tiledImage) {
         if ( !this.useCanvas || this.useWebGL2 ) {
+            // TODO, fix
             return;
         }
 
@@ -734,43 +735,73 @@ $.Drawer.prototype = {
 
     // private
     _offsetForRotation: function(options) {
-        // TODO: webgl
         var point = options.point ?
-            options.point.times($.pixelDensityRatio) :
-            this.getCanvasCenter();
+        options.point.times($.pixelDensityRatio) :
+        this.getCanvasCenter();
 
-        var context = this._getContext(options.useSketch);
+        var context;
+        var canvas;
+        if (this.useWebGL2) {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+        } else {
+            context = this._getContext(options.useSketch);
+        }
+
         context.save();
 
         context.translate(point.x, point.y);
         if(this.viewer.viewport.flipped){
-          context.rotate(Math.PI / 180 * -options.degrees);
-          context.scale(-1, 1);
+            context.rotate(Math.PI / 180 * -options.degrees);
+            context.scale(-1, 1);
         } else{
-          context.rotate(Math.PI / 180 * options.degrees);
+            context.rotate(Math.PI / 180 * options.degrees);
         }
         context.translate(-point.x, -point.y);
+        if (this.useWebGL2) {
+            // TODO not on all browsers
+            this.webGlDrawer.transform(context.getTransform());
+            context = undefined;
+            canvas = undefined;
+        }
     },
 
     // private
     _flip: function(options) {
-        // TODO: webgl
-      options = options || {};
-      var point = options.point ?
+        options = options || {};
+        var point = options.point ?
         options.point.times($.pixelDensityRatio) :
         this.getCanvasCenter();
-      var context = this._getContext(options.useSketch);
 
-      context.translate(point.x, 0);
-      context.scale(-1, 1);
-      context.translate(-point.x, 0);
+        var context;
+        var canvas;
+        if (this.useWebGL2) {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+        } else {
+            context = this._getContext(options.useSketch);
+        }
+
+        context.translate(point.x, 0);
+        context.scale(-1, 1);
+        context.translate(-point.x, 0);
+
+        if (this.useWebGL2) {
+            // TODO not on all browsers
+            this.webGlDrawer.transform(context.getTransform());
+            context = undefined;
+            canvas = undefined;
+        }
     },
 
     // private
     _restoreRotationChanges: function(useSketch) {
-        // TODO: webgl
-        var context = this._getContext(useSketch);
-        context.restore();
+        if (this.useWebGL2) {
+            this.webGlDrawer.clearTransform();
+        } else {
+            var context = this._getContext(useSketch);
+            context.restore();
+        }
     },
 
     // private

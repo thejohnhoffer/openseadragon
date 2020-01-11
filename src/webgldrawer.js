@@ -202,7 +202,6 @@ $.WebGlDrawer.prototype = {
     },
 
     drawRectangle: function( rect, fillStyle) {
-        //TODO
         this.fillRect = {
             rect: this._viewerElementToWebGlCoordinates(rect),
             color: this._parseColor(fillStyle)
@@ -223,6 +222,68 @@ $.WebGlDrawer.prototype = {
         this.imageSmoothing = enabled;
     },
 
+    /**
+     *
+     * @param {DOMMatrix} matrix transformation matrix
+     */
+    transform: function( matrix ) {
+        // TODO use
+        // TODO don't override, apply to current
+        if (!this.transformMatrix) {
+            this.transformMatrix = matrix;
+        } else {
+            // Prepend
+            const m1 = matrix;
+            const m2 = this.transformMatrix;
+
+        }
+
+    },
+
+    clearTransform() {
+        this.transformMatrix = undefined;
+    },
+
+    /**
+     * Transform point with this.transformMatrix
+     * @param {} vector vector to transform. Array of length 4 or {x, y, z, w}.
+     * @returns Input object
+     */
+    _transformPoint: function(vector) {
+        var x;
+        var y;
+        var z;
+        var w;
+        if (Array.isArray(vector)) {
+            x = vector[0];
+            y = vector[1];
+            z = vector[2];
+            w = vector[3];
+        } else {
+            x = vector.x;
+            y = vector.y;
+            z = vector.z;
+            w = vector.w;
+        }
+        var m = this.transformMatrix;
+        x = m.m11 * x + m.m21 * y + m.m31 * z + m.m41 * w;
+        y = m.m12 * x + m.m22 * y + m.m32 * z + m.m42 * w;
+        z = m.m13 * x + m.m23 * y + m.m33 * z + m.m43 * w;
+        w = m.m14 * x + m.m24 * y + m.m34 * z + m.m44 * w;
+        if (Array.isArray(vector)) {
+            vector[0] = x;
+            vector[1] = y;
+            vector[2] = z;
+            vector[3] = w;
+            return vector;
+        } else {
+            vector.x = x;
+            vector.y = y;
+            vector.z = z;
+            vector.w = w;
+            return vector;
+        }
+    },
 
     /**
      * Input coordnates use top left as origo, output uses bottom left.
@@ -251,7 +312,6 @@ $.WebGlDrawer.prototype = {
      * @param {OpenSeadragon.Point} [translate] A translation vector to offset tile position
      */
     draw: function( tiles, tiledImage, scale, translate ) {
-        // TODO drawing-handler?
         // TODO, use clip and fill rect
         // console.log('canvas size', this.canvas.width, this.canvas.height);
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -316,15 +376,6 @@ $.WebGlDrawer.prototype = {
             this._fillRect(this.fillRect.rect, this.fillRect.color);
         }
 
-        // Create texture array with all tile textures
-        // Create texture array with tile masks
-        // Create data structure with tile positions
-        // Bind data structure to a buffer in fragment shader (how?)
-        // Vertex buffer contains four corners of viewport
-        // Create sampler for tile textures
-        // Create sampler for tile masks
-
-        // TODO clean up: delete arrays/textures/program etc
         this.gl.deleteTexture(textureTilePos);
         this.gl.deleteTexture(textureTileNbr);
         this.gl.deleteTexture(texture);
@@ -457,6 +508,11 @@ $.WebGlDrawer.prototype = {
 
             for (var x = startX; x < endX; x++) {
                 for (var y = startY; y < endY; y++) {
+                    if (this.transformMatrix) {
+                        var vec = this._transformPoint([x, y, 0.0, 1.0]);
+                        x = vec[0];
+                        y = vec[2];
+                    }
                     data[(y * dataArrayStride) + x] = i;
                 }
             }
