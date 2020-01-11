@@ -244,8 +244,7 @@ $.TileCache.prototype = {
         var tile = tileRecord.tile;
         var tiledImage = tileRecord.tiledImage;
 
-        tile.unload();
-        tile.cacheImageRecord = null;
+        tiledImage.unloadTile(tiledImage, tile);
 
         var imageRecord = this._imagesLoaded[tile.cacheKey];
         imageRecord.removeTile(tile);

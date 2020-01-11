@@ -142,6 +142,26 @@ $.WebGlDrawer = function( options ) {
 /** @lends OpenSeadragon.WebGlDrawer.prototype */
 $.WebGlDrawer.prototype = {
 
+    /**
+     * Load tile to texture
+     *
+     * @param {OpenSeadragon.TiledImage} tiledImage
+     * @param {OpenSeadragon.Tile} tile
+     */
+    loadTile: function( tile, tiledImage ) {
+        // TODO omplement
+    },
+
+    /**
+     * Unload tile from texture
+     *
+     * @param {OpenSeadragon.TiledImage} tiledImage
+     * @param {OpenSeadragon.Tile} tile
+     */
+    unloadTile: function( tile, tiledImage ) {
+        // TODO implement
+    },
+
     clear: function( bounds ) {
         this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         if (bounds) {

@@ -874,6 +874,20 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     *
+     * @param {OpenSeadragon.TiledImage} tiledImage
+     * @param {OpenSeadragon.Tile} tile
+     */
+    unloadTile: function( tiledImage, tile ) {
+        if (tiledImage._drawer.useWebGL2) {
+            tiledImage._drawer.webGlDrawer.unloadTile( tile, tiledImage );
+        }
+
+        tile.unload();
+        tile.cacheImageRecord = null;
+    },
+
+    /**
      * @param {String} compositeOperation the tiled image should be drawn with this globalCompositeOperation.
      * @fires OpenSeadragon.TiledImage.event:composite-operation-change
      */
@@ -1558,6 +1572,9 @@ function setTileLoaded(tiledImage, tile, image, cutoff, tileRequest) {
                     cutoff: cutoff,
                     tiledImage: tiledImage
                 });
+            }
+            if (tiledImage._drawer.useWebGL2) {
+                tiledImage._drawer.webGlDrawer.loadTile( tile, tiledImage );
             }
             tiledImage._needsDraw = true;
         }
