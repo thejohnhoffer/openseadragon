@@ -12,7 +12,8 @@
             viewer = OpenSeadragon({
                 id:            'example',
                 prefixUrl:     '/build/openseadragon/images/',
-                springStiffness: 100 // Faster animation = faster tests
+                springStiffness: 100, // Faster animation = faster tests,
+                useWebGL2: false
             });
         },
         afterEach: function () {

@@ -1637,7 +1637,7 @@ function positionTile( tile, overlap, viewport, viewportCenter, levelVisibility,
         tileCenter = positionT.plus( sizeT.divide( 2 ) ),
         tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-    if ( !this._drawer.useWebGL2 ) {
+    if ( !tiledImage._drawer.useWebGL2 ) {
         // Needed to avoid visible seams in canvas 2d context.
         if ( !overlap ) {
             sizeC = sizeC.plus( new $.Point( 1, 1 ) );
