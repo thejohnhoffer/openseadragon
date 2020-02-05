@@ -326,6 +326,17 @@ $.Drawer.prototype = {
     drawTiles: function(tiles, tiledImage, useSketch, scale, translate) {
         scale = scale || 1;
         if ( this.useWebGL2) {
+
+            var minLevel;
+            for (var t = 0; t < tiles.length; t++) {
+                var level = tiles[t].level;
+                minLevel = t === 0 ? level : Math.min(minLevel, level);
+            }
+
+            tiles = tiles.filter(function(t){
+                return t.level === minLevel;
+            });
+
             tiledImage._drawer.webGlDrawer.draw( tiles, tiledImage, scale, translate );
             // in webGL all tiles are draw at once, can't hook in to drawing of each tile
             // Instead, fire all events at once.

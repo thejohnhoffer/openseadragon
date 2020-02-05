@@ -83,6 +83,7 @@ $.WebGlDrawer = function( options ) {
         out vec4 color;                                         \
         uniform int tilesLength;   \
         uniform float globalAlpha;          \
+        uniform vec2 tileShape;          \
         uniform sampler2DArray textureSampler;                            \
         uniform usampler2D tileNbrSampler;                                  \
         uniform sampler2DArray tilePosSampler;                                  \
@@ -96,8 +97,8 @@ $.WebGlDrawer = function( options ) {
                 float ty = pos.y;    \
                 float tw = pos.z;    \
                 float th = pos.w;    \
-                float px = (gl_FragCoord.x - tx) / tw;   \
-                float py = (th - (gl_FragCoord.y - ty)) / th;   \
+                float px = (gl_FragCoord.x - tx) / tileShape.x;   \
+                float py = (th - (gl_FragCoord.y - ty)) / tileShape.y;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
                 c.w = c.w * globalAlpha;      \
                 c.x = c.x * c.w;             \
@@ -119,6 +120,7 @@ $.WebGlDrawer = function( options ) {
 
     var vertexPos = this.gl.getAttribLocation(this.program, "aVertexPos");
 
+    var tileShape = this.gl.getUniformLocation(this.program, "tileShape");
     var globalAlpha = this.gl.getUniformLocation(this.program, "globalAlpha");
     var tilesLength = this.gl.getUniformLocation(this.program, "tilesLength");
     var textureSampler = this.gl.getUniformLocation(this.program, "textureSampler");
@@ -129,6 +131,7 @@ $.WebGlDrawer = function( options ) {
 
     this.shader = {
         vertexPos: vertexPos,
+        tileShape: tileShape,
         globalAlpha: globalAlpha,
         tilesLength: tilesLength,
         textureSampler: textureSampler,
@@ -544,12 +547,16 @@ $.WebGlDrawer.prototype = {
 
         // Origo is top left in tile coord
         // Origo is bottom left in texture
+        var maxWidth = 0;
+        var maxHeight = 0;
         for (var i = 0; i < tiles.length; i++) {
             // eslint-disable-next-line no-undef
             var data = new Float32Array(4);
             var tile = tiles[i];
             var bounds = tile.getDestinationRect(scale, translate);
             bounds = this._viewerElementToWebGlCoordinates(bounds);
+            maxWidth = bounds.width > maxWidth ? bounds.width : maxWidth;
+            maxHeight = bounds.height > maxHeight ? bounds.height : maxHeight;
             data[0] = bounds.x;
             data[1] = bounds.y;
             data[2] = bounds.width;
@@ -575,6 +582,7 @@ $.WebGlDrawer.prototype = {
             this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, data);
 
         }
+        this.gl.uniform2f(this.shader.tileShape, maxWidth, maxHeight);
 
         return texture;
     }
