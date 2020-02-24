@@ -102,6 +102,8 @@ ImageJob.prototype = {
                     // BlobBuilder fallback adapted from
                     // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
                     try {
+                        // Store the original response
+                        self.image._array = request.response;
                         blb = new window.Blob([request.response]);
                     } catch (e) {
                         var BlobBuilder = (

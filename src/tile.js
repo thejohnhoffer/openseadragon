@@ -299,6 +299,30 @@ $.Tile.prototype = {
         $.setElementOpacity( this.element, this.opacity );
     },
 
+    getTypedArray: function() {
+
+        if (!this.cacheImageRecord) {
+            $.console.warn(
+                '[Tile.getTypedArray] attempting to read tile %s when it\'s not cached',
+                this.toString());
+            return null;
+        }
+        if (this.cacheImageRecord.typedArray) {
+          return this.cacheImageRecord.typedArray;
+        }
+
+        // custom user-defined array
+        if (this._array) {
+          return this._array;
+        }
+
+        var rendered = this.cacheImageRecord.getRenderedContext();
+        var bounds = this.limitSourceBounds(rendered.canvas);
+        var imageData = rendered.getImageData(0, 0, bounds.width, bounds.height);
+        var typedArray = Uint8Array.from(imageData.data);
+        return typedArray;
+    },
+
     getContext: function() {
         var rendered;
 

@@ -44,6 +44,7 @@ $.WebGlDrawer = function( options ) {
 
     $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
     $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
+    $.console.assert( options.fragmentShaderOutput, "[WebGlDrawer] options.fragmentShaderOutput is required." );
 
     this.canvas = options.canvas;
     this.gl = options.context;
@@ -100,11 +101,7 @@ $.WebGlDrawer = function( options ) {
                 float px = (gl_FragCoord.x - tx) / tileShape.x;   \
                 float py = (th - (gl_FragCoord.y - ty)) / tileShape.y;   \
                 vec4 c = texture(textureSampler, vec3(px, py, float(tile)));   \
-                c.w = c.w * globalAlpha;      \
-                c.x = c.x * c.w;             \
-                c.y = c.y * c.w;             \
-                c.z = c.z * c.w;             \
-                color = c;     \
+            " + options.fragmentShaderOutput + "\
             } else {  \
                 color = vec4(0.0, 0.0, 0.0, 0.0);    \
             }   \
@@ -319,7 +316,7 @@ $.WebGlDrawer.prototype = {
 
         this.gl.useProgram(this.program);
 
-        var texture = this._loadTexture(tiles);
+        var texture = this._loadTexture(tiles, tiledImage);
         var textureTileNbr = this._loadTileNumberTexture(tiles, scale, translate);
         var textureTilePos = this._loadTilePositionTexture(tiles, scale, translate);
 
@@ -420,7 +417,7 @@ $.WebGlDrawer.prototype = {
         return program;
     },
 
-    _loadTexture: function( tiles ) {
+    _loadTexture: function( tiles, tiledImage) {
         var texture = this.gl.createTexture();
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, texture);
@@ -438,12 +435,17 @@ $.WebGlDrawer.prototype = {
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_BASE_LEVEL, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LOD, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_LOD, 0);
+        this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, 1);
 
         var size = [];
         var maxWidth = 0;
         var maxHeight = 0;
         for (var i = 0; i < tiles.length; i++) {
             var bounds = tiles[i].limitSourceBounds(tiles[i].getContext().canvas);
+            if (tiles[i]._width && tiles[i]._height) {
+              bounds.width = tiles[i]._width;
+              bounds.height = tiles[i]._height;
+            }
             size.push(bounds);
             maxWidth = bounds.width > maxWidth ? bounds.width : maxWidth;
             maxHeight = bounds.height > maxHeight ? bounds.height : maxHeight;
@@ -453,18 +455,18 @@ $.WebGlDrawer.prototype = {
         var depth = 1;
         var xoffset = 0;
         var yoffset = 0;
-        var format = this.gl.RGBA;
+
+        var format = this.gl[tiledImage.format];
+        var internalFormat = this.gl[tiledImage.internalFormat];
         var type = this.gl.UNSIGNED_BYTE;
         var levels = 1;
-        var internalFormat = this.gl.RGBA8;
         this.gl.texStorage3D(this.gl.TEXTURE_2D_ARRAY, levels, internalFormat, maxWidth, maxHeight, tiles.length);
 
         for (var j = 0; j < tiles.length; j++) {
             var zoffset = j;
-            var context = tiles[j].getContext();
             var width = size[j].width;
             var height = size[j].height;
-            this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, context.canvas);
+            this.gl.texSubImage3D(this.gl.TEXTURE_2D_ARRAY, level, xoffset, yoffset, zoffset, width, height, depth, format, type, tiles[j].getTypedArray());
         }
         return texture;
     },

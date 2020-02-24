@@ -177,6 +177,8 @@ $.TiledImage = function( options ) {
         placeholderFillStyle:   $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                $.DEFAULT_SETTINGS.opacity,
         preload:                $.DEFAULT_SETTINGS.preload,
+        format:                 $.DEFAULT_SETTINGS.format,
+        internalFormat:         $.DEFAULT_SETTINGS.internalFormat,
         compositeOperation:     $.DEFAULT_SETTINGS.compositeOperation
     }, options );
 

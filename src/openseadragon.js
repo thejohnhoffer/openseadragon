@@ -1197,6 +1197,17 @@ function OpenSeadragon( options ){
             // INITIAL FLIP STATE
             flipped:                    false,
 
+            // WEBGL
+            format: 'RGBA',
+            internalFormat: 'RGBA8',
+            fragmentShaderOutput: "\
+            c.w = c.w * globalAlpha;      \
+            c.x = c.x * c.w;             \
+            c.y = c.y * c.w;             \
+            c.z = c.z * c.w;             \
+            color = c;     \
+            ",
+
             // APPEARANCE
             opacity:                    1,
             preload:                    false,
