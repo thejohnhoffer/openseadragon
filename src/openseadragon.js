@@ -1200,6 +1200,7 @@ function OpenSeadragon( options ){
             // WEBGL
             format: 'RGBA',
             internalFormat: 'RGBA8',
+            fragmentShaderHeader: "",
             fragmentShaderOutput: "\
             c.w = c.w * globalAlpha;      \
             c.x = c.x * c.w;             \

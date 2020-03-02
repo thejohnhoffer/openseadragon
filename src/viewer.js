@@ -399,7 +399,8 @@ $.Viewer = function( options ) {
         viewport:           this.viewport,
         element:            this.canvas,
         debugGridColor:     this.debugGridColor,
-        fragmentShaderOutput: this.fragmentShaderOutput
+        fragmentShaderOutput: this.fragmentShaderOutput,
+        fragmentShaderHeader: this.fragmentShaderHeader
     });
 
     // Overlay container
@@ -1330,6 +1331,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (options.fragmentShaderOutput === undefined) {
             options.fragmentShaderOutput = this.fragmentShaderOutput;
         }
+        if (options.fragmentShaderHeader === undefined) {
+            options.fragmentShaderHeader = this.fragmentShaderHeader;
+        }
         if (options.compositeOperation === undefined) {
             options.compositeOperation = this.compositeOperation;
         }
@@ -1436,7 +1440,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     imageLoader: _this.imageLoader,
                     format: _this.format,
                     internalFormat: _this.internalFormat,
-                    fragmentShaderOutput: _this.fragmentShaderOutput,
                     x: queueItem.options.x,
                     y: queueItem.options.y,
                     width: queueItem.options.width,

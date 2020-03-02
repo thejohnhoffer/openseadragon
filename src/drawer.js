@@ -107,7 +107,8 @@ $.Drawer = function( options ) {
     this.webGlDrawer = this.useWebGL2 ? new $.WebGlDrawer( {
         canvas:  this.canvas,
         context: this.context,
-        fragmentShaderOutput: options.fragmentShaderOutput
+        fragmentShaderOutput: options.fragmentShaderOutput,
+        fragmentShaderHeader: options.fragmentShaderHeader
     } ) : null;
 
     /**

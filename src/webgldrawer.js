@@ -45,6 +45,7 @@ $.WebGlDrawer = function( options ) {
     $.console.assert( options.canvas, "[WebGlDrawer] options.canvas is required." );
     $.console.assert( options.context, "[WebGlDrawer] options.context is required." );
     $.console.assert( options.fragmentShaderOutput, "[WebGlDrawer] options.fragmentShaderOutput is required." );
+    $.console.assert( options.fragmentShaderHeader, "[WebGlDrawer] options.fragmentShaderHeader is required." );
 
     this.canvas = options.canvas;
     this.gl = options.context;
@@ -80,7 +81,7 @@ $.WebGlDrawer = function( options ) {
         precision highp int;                                                \
         precision highp sampler2DArray;                                    \
         precision highp usampler2D;                                    \
-                                                                    \
+        " + options.fragmentShaderHeader + "\
         out vec4 color;                                         \
         uniform int tilesLength;   \
         uniform float globalAlpha;          \
@@ -346,6 +347,8 @@ $.WebGlDrawer.prototype = {
             offset);
         this.gl.enableVertexAttribArray(this.shader.vertexPos);
 
+        tiledImage.source.drawHandler(this.gl, this.program);
+
         this.gl.uniform1f(this.shader.globalAlpha, tiledImage.getOpacity());
         this.gl.uniform1i(this.shader.tilesLength, tiles.length);
         this.gl.uniform1i(this.shader.textureSampler, 0);
@@ -436,6 +439,9 @@ $.WebGlDrawer.prototype = {
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAX_LOD, 0);
         this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MIN_LOD, 0);
         this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, 1);
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendEquation(this.gl.FUNC_ADD);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_ALPHA);
 
         var size = [];
         var maxWidth = 0;
