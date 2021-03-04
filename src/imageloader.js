@@ -120,7 +120,7 @@ ImageJob.prototype = {
                         }
                     }
                     // If the blob is empty for some reason consider the image load a failure.
-                    if (blb.size === 0) {
+                    if (blb === undefined || blb.size === 0) {
                         self.errorMsg = "Empty image response.";
                         self.finish(false);
                     }
